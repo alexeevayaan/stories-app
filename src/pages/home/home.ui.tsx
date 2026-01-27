@@ -55,6 +55,9 @@ export function HomeScreen() {
       { translateX: translationX.value },
       { translateY: translationY.value },
     ],
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   }));
 
   const pan = Gesture.Pan()
@@ -85,6 +88,7 @@ export function HomeScreen() {
       style={{
         width,
         height,
+        alignItems: "center",
       }}
     >
       <Lines
@@ -97,6 +101,7 @@ export function HomeScreen() {
           <View
             style={{
               ...resetStyles.reset,
+              flexDirection: "row",
             }}
           >
             <SkiaBackground
@@ -237,7 +242,10 @@ interface IPropsLines {
 
 const LINE_HEIGHT = 2;
 const VERTICAL_PADDING = 24;
+const HORIZONTAL_PADDING = 24;
 const LINE_OPACITY_DISTANCE = 8;
+const LINE_COLOR_DISTANCE = 1;
+const COLORS = ["#8282ff", "#06f957", "#8282ff"];
 
 const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
   const insets = useSafeAreaInsets();
@@ -265,21 +273,20 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
       backgroundColor: interpolateColor(
         translationY.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
+          targetValue - LINE_COLOR_DISTANCE,
           targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          targetValue + LINE_COLOR_DISTANCE,
         ],
-        ["#8282ff", "#06f957", "#8282ff"],
+        COLORS,
       ),
     };
   }, [textSize]);
 
   const middleLineXStyle = useAnimatedStyle(() => {
-    const middle =
-      (height - insets.bottom - insets.top - VERTICAL_PADDING * 2) / 2;
+    const middle = (height - insets.bottom - insets.top) / 2;
 
     const targetValue = Math.floor(
-      insets.top + VERTICAL_PADDING + middle + 1 - textSize.value.height / 2,
+      insets.top + middle + LINE_HEIGHT - textSize.value.height / 2,
     );
 
     return {
@@ -295,11 +302,11 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
       backgroundColor: interpolateColor(
         translationY.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
+          targetValue - LINE_COLOR_DISTANCE,
           targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          targetValue + LINE_COLOR_DISTANCE,
         ],
-        ["#8282ff", "#06f957", "#8282ff"],
+        COLORS,
       ),
     };
   }, [textSize]);
@@ -326,11 +333,11 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
       backgroundColor: interpolateColor(
         translationY.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
+          targetValue - LINE_COLOR_DISTANCE,
           targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          targetValue + LINE_COLOR_DISTANCE,
         ],
-        ["#8282ff", "#06f957", "#8282ff"],
+        COLORS,
       ),
     };
   }, [textSize]);
@@ -339,22 +346,16 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
     <View
       pointerEvents="none"
       style={{
-        position: "absolute",
-        top: insets.top,
-        bottom: insets.bottom,
-        left: insets.left,
-        right: insets.right,
-        // backgroundColor: "red",
+        ...StyleSheet.absoluteFillObject,
       }}
     >
       <Animated.View
         style={[
           {
-            backgroundColor: "#0e6178",
             width: "100%",
             height: LINE_HEIGHT,
             position: "absolute",
-            top: VERTICAL_PADDING,
+            top: VERTICAL_PADDING + insets.top,
           },
           topLineXStyle,
         ]}
@@ -363,11 +364,10 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
       <Animated.View
         style={[
           {
-            backgroundColor: "#0e6178",
             width: "100%",
             height: LINE_HEIGHT,
             position: "absolute",
-            bottom: (height - insets.bottom - insets.top) / 2,
+            bottom: (height - insets.bottom - LINE_HEIGHT) / 2,
           },
           middleLineXStyle,
         ]}
@@ -376,13 +376,48 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
       <Animated.View
         style={[
           {
-            backgroundColor: "#0e6178",
             width: "100%",
             height: LINE_HEIGHT,
             position: "absolute",
-            bottom: VERTICAL_PADDING,
+            bottom: VERTICAL_PADDING + insets.bottom,
           },
           bottomLineXStyle,
+        ]}
+      />
+
+      {/* line verticals */}
+
+      <Animated.View
+        style={[
+          {
+            width: LINE_HEIGHT,
+            height: "100%",
+            position: "absolute",
+            left: HORIZONTAL_PADDING,
+            backgroundColor: "#8282ff",
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          {
+            width: LINE_HEIGHT,
+            height: "100%",
+            position: "absolute",
+            left: width / 2 - LINE_HEIGHT / 2,
+            backgroundColor: "#8282ff",
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          {
+            width: LINE_HEIGHT,
+            height: "100%",
+            position: "absolute",
+            right: HORIZONTAL_PADDING,
+            backgroundColor: "#8282ff",
+          },
         ]}
       />
     </View>
