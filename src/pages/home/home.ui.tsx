@@ -1,10 +1,12 @@
 import {
   Dimensions,
+  StyleProp,
   StyleSheet,
   Text,
   TextInput,
   TextLayoutLine,
   View,
+  ViewStyle,
 } from "react-native";
 
 import {
@@ -21,7 +23,6 @@ import Animated, {
   interpolate,
   interpolateColor,
   SharedValue,
-  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
@@ -250,13 +251,6 @@ const COLORS = ["#8282ff", "#06f957", "#8282ff"];
 const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
   const insets = useSafeAreaInsets();
 
-  useAnimatedReaction(
-    () => translationY.value,
-    (currentY) => {
-      console.log("translationY:", currentY);
-    },
-  );
-
   const topLineXStyle = useAnimatedStyle(() => {
     const targetValue = Math.floor(insets.top + VERTICAL_PADDING + LINE_HEIGHT);
 
@@ -342,6 +336,159 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
     };
   }, [textSize]);
 
+  const leftLineYStyle = useAnimatedStyle(() => {
+    const targetValue =
+      -Math.floor(width / 2 - textSize.value.width / 2) +
+      HORIZONTAL_PADDING +
+      LINE_HEIGHT;
+
+    return {
+      opacity: interpolate(
+        translationX.value,
+        [
+          targetValue - LINE_OPACITY_DISTANCE,
+          targetValue,
+          targetValue + LINE_OPACITY_DISTANCE,
+        ],
+        [0, 1, 0],
+      ),
+      backgroundColor: interpolateColor(
+        translationX.value,
+        [
+          targetValue - LINE_COLOR_DISTANCE,
+          targetValue,
+          targetValue + LINE_COLOR_DISTANCE,
+        ],
+        COLORS,
+      ),
+    };
+  }, [textSize]);
+
+  const middleLineYStyle = useAnimatedStyle(() => {
+    const targetValue = 0;
+
+    return {
+      opacity: interpolate(
+        translationX.value,
+        [
+          targetValue - LINE_OPACITY_DISTANCE,
+          targetValue,
+          targetValue + LINE_OPACITY_DISTANCE,
+        ],
+        [0, 1, 0],
+      ),
+      backgroundColor: interpolateColor(
+        translationX.value,
+        [
+          targetValue - LINE_COLOR_DISTANCE,
+          targetValue,
+          targetValue + LINE_COLOR_DISTANCE,
+        ],
+        COLORS,
+      ),
+    };
+  }, [textSize]);
+
+  const rightLineYStyle = useAnimatedStyle(() => {
+    const targetValue =
+      Math.floor(width / 2 - textSize.value.width / 2) -
+      HORIZONTAL_PADDING -
+      LINE_HEIGHT;
+
+    return {
+      opacity: interpolate(
+        translationX.value,
+        [
+          targetValue - LINE_OPACITY_DISTANCE,
+          targetValue,
+          targetValue + LINE_OPACITY_DISTANCE,
+        ],
+        [0, 1, 0],
+      ),
+      backgroundColor: interpolateColor(
+        translationX.value,
+        [
+          targetValue - LINE_COLOR_DISTANCE,
+          targetValue,
+          targetValue + LINE_COLOR_DISTANCE,
+        ],
+        COLORS,
+      ),
+    };
+  }, [textSize]);
+
+  const lines = [
+    {
+      style: [
+        {
+          width: "100%",
+          height: LINE_HEIGHT,
+          position: "absolute",
+          top: VERTICAL_PADDING + insets.top,
+        },
+        topLineXStyle,
+      ],
+    },
+    {
+      style: [
+        {
+          width: "100%",
+          height: LINE_HEIGHT,
+          position: "absolute",
+          bottom: (height - insets.bottom - LINE_HEIGHT) / 2,
+        },
+        middleLineXStyle,
+      ],
+    },
+    {
+      style: [
+        {
+          width: "100%",
+          height: LINE_HEIGHT,
+          position: "absolute",
+          bottom: VERTICAL_PADDING + insets.bottom,
+        },
+        bottomLineXStyle,
+      ],
+    },
+    {
+      style: [
+        {
+          width: LINE_HEIGHT,
+          height: "100%",
+          position: "absolute",
+          left: HORIZONTAL_PADDING,
+          backgroundColor: "#8282ff",
+        },
+        leftLineYStyle,
+      ],
+    },
+    {
+      style: [
+        {
+          width: LINE_HEIGHT,
+          height: "100%",
+          position: "absolute",
+          left: width / 2 - LINE_HEIGHT / 2,
+          backgroundColor: "#8282ff",
+        },
+        middleLineYStyle,
+      ],
+    },
+    {
+      style: [
+        {
+          width: LINE_HEIGHT,
+          height: "100%",
+          position: "absolute",
+          right: HORIZONTAL_PADDING,
+          backgroundColor: "#8282ff",
+        },
+        rightLineYStyle,
+      ],
+    },
+  ];
+
   return (
     <View
       pointerEvents="none"
@@ -349,77 +496,14 @@ const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
         ...StyleSheet.absoluteFillObject,
       }}
     >
-      <Animated.View
-        style={[
-          {
-            width: "100%",
-            height: LINE_HEIGHT,
-            position: "absolute",
-            top: VERTICAL_PADDING + insets.top,
-          },
-          topLineXStyle,
-        ]}
-      />
-
-      <Animated.View
-        style={[
-          {
-            width: "100%",
-            height: LINE_HEIGHT,
-            position: "absolute",
-            bottom: (height - insets.bottom - LINE_HEIGHT) / 2,
-          },
-          middleLineXStyle,
-        ]}
-      />
-
-      <Animated.View
-        style={[
-          {
-            width: "100%",
-            height: LINE_HEIGHT,
-            position: "absolute",
-            bottom: VERTICAL_PADDING + insets.bottom,
-          },
-          bottomLineXStyle,
-        ]}
-      />
-
-      {/* line verticals */}
-
-      <Animated.View
-        style={[
-          {
-            width: LINE_HEIGHT,
-            height: "100%",
-            position: "absolute",
-            left: HORIZONTAL_PADDING,
-            backgroundColor: "#8282ff",
-          },
-        ]}
-      />
-      <Animated.View
-        style={[
-          {
-            width: LINE_HEIGHT,
-            height: "100%",
-            position: "absolute",
-            left: width / 2 - LINE_HEIGHT / 2,
-            backgroundColor: "#8282ff",
-          },
-        ]}
-      />
-      <Animated.View
-        style={[
-          {
-            width: LINE_HEIGHT,
-            height: "100%",
-            position: "absolute",
-            right: HORIZONTAL_PADDING,
-            backgroundColor: "#8282ff",
-          },
-        ]}
-      />
+      {lines.map((item, index) => {
+        return (
+          <Animated.View
+            key={index}
+            style={item.style as StyleProp<ViewStyle>[]}
+          />
+        );
+      })}
     </View>
   );
 };
