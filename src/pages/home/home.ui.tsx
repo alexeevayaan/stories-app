@@ -17,25 +17,73 @@ import {
   Paint,
   RoundedRect,
 } from "@shopify/react-native-skia";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   interpolate,
   interpolateColor,
   SharedValue,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const { width, height } = Dimensions.get("screen");
+
+const IN_TO_LINE_INTERVAL = 2;
+const OUT_TO_LINE_INTERVAL = 34;
+
+const LINE_HEIGHT = 2;
+const VERTICAL_PADDING = 24;
+const HORIZONTAL_PADDING = 24;
+const LINE_OPACITY_DISTANCE = 8;
+const LINE_COLOR_DISTANCE = 1;
+const COLORS = ["#ffffff", "rgb(0, 165, 184)", "#ffffff"];
+
 function clamp(val: number, min: number, max: number) {
+  "worklet";
   return Math.min(Math.max(val, min), max);
 }
 
-const { width, height } = Dimensions.get("screen");
+interface ILines {
+  xTop: number;
+  xMiddle: number;
+  xBottom: number;
+  yLeft: number;
+  yMiddle: number;
+  yRight: number;
+}
+
+interface ILimitLines extends ILines {}
+
+interface IActiveLines extends ILines {}
+
+const useGetPositions = () => {
+  const translationX = useSharedValue(0);
+  const translationY = useSharedValue(0);
+  const prevTranslationX = useSharedValue(0);
+  const prevTranslationY = useSharedValue(0);
+
+  return {
+    translationX,
+    translationY,
+    prevTranslationX,
+    prevTranslationY,
+  };
+};
 
 export function HomeScreen() {
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const inputRef = useRef<TextInput>(null);
+
+  useLayoutEffect(() => {
+    inputRef.current?.measure((_, __, w, h) => {
+      textSize.value.height = h;
+      textSize.value.width = w;
+    });
+  });
+
+  const insets = useSafeAreaInsets();
 
   const [text, setText] = useState("j oijfoiewji dsa dasd\n\n asd asd ");
 
@@ -45,11 +93,55 @@ export function HomeScreen() {
 
   const textSize = useSharedValue({ width: 0, height: 0 });
 
-  // Gesture handler
-  const translationX = useSharedValue(0);
-  const translationY = useSharedValue(0);
-  const prevTranslationX = useSharedValue(0);
-  const prevTranslationY = useSharedValue(0);
+  const { translationX, translationY, prevTranslationX, prevTranslationY } =
+    useGetPositions();
+
+  const activeLines = useRef<IActiveLines>({
+    xTop: 0,
+    xMiddle: 0,
+    xBottom: 0,
+    yLeft: 0,
+    yMiddle: 0,
+    yRight: 0,
+  });
+
+  const limitLines = useDerivedValue<ILimitLines>(() => {
+    const xTop = Math.round(insets.top + VERTICAL_PADDING + LINE_HEIGHT);
+
+    const middle = (height - insets.bottom - insets.top) / 2;
+    const xMiddle = Math.round(
+      insets.top + middle + LINE_HEIGHT - textSize.value.height / 2,
+    );
+
+    const xBottom = Math.round(
+      height -
+        insets.bottom -
+        VERTICAL_PADDING -
+        textSize.value.height -
+        LINE_HEIGHT,
+    );
+
+    const yLeft =
+      -Math.round(width / 2 - textSize.value.width / 2) +
+      HORIZONTAL_PADDING +
+      LINE_HEIGHT;
+
+    const yMiddle = 0;
+
+    const yRight =
+      Math.round(width / 2 - textSize.value.width / 2) -
+      HORIZONTAL_PADDING -
+      LINE_HEIGHT;
+
+    return {
+      xTop,
+      xMiddle,
+      xBottom,
+      yLeft,
+      yMiddle,
+      yRight,
+    };
+  });
 
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [
@@ -61,26 +153,126 @@ export function HomeScreen() {
     alignItems: "center",
   }));
 
+  function snap(
+    value: number,
+    target: number,
+    key: keyof IActiveLines,
+  ): number {
+    "worklet";
+
+    const between = Math.abs(value - target);
+
+    if (between <= IN_TO_LINE_INTERVAL) {
+      if (!activeLines.current[key]) activeLines.current[key] = 1;
+
+      return target;
+    }
+
+    if (activeLines.current[key] && between <= OUT_TO_LINE_INTERVAL) {
+      if (!activeLines.current[key]) activeLines.current[key] = 1;
+
+      return target;
+    }
+
+    if (activeLines.current[key]) activeLines.current[key] = 0;
+
+    return value;
+  }
+
+  const cache = useRef({
+    local: {
+      x: 0,
+      y: 0,
+    },
+    global: { x: 0, y: 0 },
+  });
+
+  function fixTraslation(
+    type: "x" | "y",
+    value: number,
+    target: number,
+    key: keyof IActiveLines,
+  ): number {
+    "worklet";
+
+    const isIn =
+      Math.abs(
+        value +
+          (type === "x" ? cache.current.global.x : cache.current.global.y) -
+          target,
+      ) <= IN_TO_LINE_INTERVAL;
+
+    const isOut =
+      Math.abs(
+        value +
+          (type === "x" ? cache.current.global.x : cache.current.global.y) -
+          target,
+      ) <= OUT_TO_LINE_INTERVAL;
+
+    if (isIn && !activeLines.current[key]) {
+      activeLines.current[key] = 1;
+
+      if (type === "y") cache.current.local.y = value;
+      else cache.current.local.x = value;
+    }
+
+    if (activeLines.current[key]) {
+      if (isOut) return target;
+
+      activeLines.current[key] = 0;
+
+      if (type === "y") cache.current.global.y = value - cache.current.local.y;
+      else cache.current.global.x = value - cache.current.local.x;
+    }
+
+    return value;
+  }
+
   const pan = Gesture.Pan()
-    .minDistance(1)
     .onStart(() => {
       prevTranslationX.value = translationX.value;
       prevTranslationY.value = translationY.value;
+
+      cache.current.local.y = 0;
+      cache.current.local.x = 0;
+      cache.current.global.x = 0;
+      cache.current.global.y = 0;
     })
     .onUpdate((event) => {
-      const maxTranslateX = width - containerSize.width / 2;
-      const maxTranslateY = height - containerSize.height / 2;
+      let x = prevTranslationX.value + event.translationX;
+      let y = prevTranslationY.value + event.translationY;
 
-      translationX.value = clamp(
-        prevTranslationX.value + event.translationX,
-        -maxTranslateX,
-        maxTranslateX,
-      );
-      translationY.value = clamp(
-        prevTranslationY.value + event.translationY,
-        -maxTranslateY,
-        maxTranslateY,
-      );
+      // x = fixTraslation(x, limitLines.value.yMiddle, "yMiddle");
+      // x = fixTraslation(x, limitLines.value.yLeft, "yLeft");
+      // x = fixTraslation(x, limitLines.value.yRight, "yRight");
+
+      y = fixTraslation("y", y, limitLines.value.xMiddle, "xMiddle");
+      // y = fixTraslation(y, limitLines.value.xTop, "xTop");
+      // y = fixTraslation(y, limitLines.value.xBottom, "xBottom");
+
+      translationX.value = x - cache.current.global.x;
+      translationY.value = y - cache.current.global.y;
+      //-----------------------------
+
+      // const maxX = width - textSize.value.width;
+      // const maxY = height - textSize.value.height;
+
+      // const currentX = Math.round(prevTranslationX.value + event.translationX);
+      // const currentY = Math.round(prevTranslationY.value + event.translationY);
+
+      // let x = clamp(currentX, -maxX / 2, maxX / 2);
+      // let y = clamp(currentY, 0, maxY);
+
+      // x = snap(x, limitLines.value.yMiddle, "yMiddle");
+      // x = snap(x, limitLines.value.yLeft, "yLeft");
+      // x = snap(x, limitLines.value.yRight, "yRight");
+
+      // y = snap(y, limitLines.value.xMiddle, "xMiddle");
+      // y = snap(y, limitLines.value.xTop, "xTop");
+      // y = snap(y, limitLines.value.xBottom, "xBottom");
+
+      // translationX.value = x;
+      // translationY.value = y;
     })
     .runOnJS(true);
 
@@ -90,12 +282,13 @@ export function HomeScreen() {
         width,
         height,
         alignItems: "center",
+        backgroundColor: "#4343",
       }}
     >
       <Lines
         translationX={translationX}
         translationY={translationY}
-        textSize={textSize}
+        limitLines={limitLines}
       />
       <GestureDetector gesture={pan}>
         <Animated.View style={animatedStyles}>
@@ -110,6 +303,7 @@ export function HomeScreen() {
               textIsEmpty={!text || text?.length === 0}
             />
             <TextInput
+              ref={inputRef}
               value={text}
               onChangeText={setText}
               multiline={true}
@@ -123,7 +317,6 @@ export function HomeScreen() {
                 ...resetStyles.reset,
               }}
               onContentSizeChange={(e) => {
-                setContainerSize(e.nativeEvent.contentSize);
                 textSize.value = e.nativeEvent.contentSize;
               }}
             />
@@ -238,184 +431,149 @@ const SkiaBackground = ({ lines, textIsEmpty }: IPropsSkiaBackground) => {
 interface IPropsLines {
   translationX: SharedValue<number>;
   translationY: SharedValue<number>;
-  textSize: SharedValue<{ width: number; height: number }>;
+  limitLines: SharedValue<ILimitLines>;
 }
 
-const LINE_HEIGHT = 2;
-const VERTICAL_PADDING = 24;
-const HORIZONTAL_PADDING = 24;
-const LINE_OPACITY_DISTANCE = 8;
-const LINE_COLOR_DISTANCE = 1;
-const COLORS = ["#8282ff", "#06f957", "#8282ff"];
-
-const Lines = ({ translationX, translationY, textSize }: IPropsLines) => {
+const Lines = ({ translationX, translationY, limitLines }: IPropsLines) => {
   const insets = useSafeAreaInsets();
 
   const topLineXStyle = useAnimatedStyle(() => {
-    const targetValue = Math.floor(insets.top + VERTICAL_PADDING + LINE_HEIGHT);
-
     return {
       opacity: interpolate(
         translationY.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
-          targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          limitLines.value.xTop - LINE_OPACITY_DISTANCE,
+          limitLines.value.xTop,
+          limitLines.value.xTop + LINE_OPACITY_DISTANCE,
         ],
         [0, 1, 0],
       ),
       backgroundColor: interpolateColor(
         translationY.value,
         [
-          targetValue - LINE_COLOR_DISTANCE,
-          targetValue,
-          targetValue + LINE_COLOR_DISTANCE,
+          limitLines.value.xTop - LINE_COLOR_DISTANCE,
+          limitLines.value.xTop,
+          limitLines.value.xTop + LINE_COLOR_DISTANCE,
         ],
         COLORS,
       ),
     };
-  }, [textSize]);
+  }, [limitLines]);
 
   const middleLineXStyle = useAnimatedStyle(() => {
-    const middle = (height - insets.bottom - insets.top) / 2;
-
-    const targetValue = Math.floor(
-      insets.top + middle + LINE_HEIGHT - textSize.value.height / 2,
-    );
-
     return {
       opacity: interpolate(
         translationY.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
-          targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          limitLines.value.xMiddle - LINE_OPACITY_DISTANCE,
+          limitLines.value.xMiddle,
+          limitLines.value.xMiddle + LINE_OPACITY_DISTANCE,
         ],
         [0, 1, 0],
       ),
       backgroundColor: interpolateColor(
         translationY.value,
         [
-          targetValue - LINE_COLOR_DISTANCE,
-          targetValue,
-          targetValue + LINE_COLOR_DISTANCE,
+          limitLines.value.xMiddle - LINE_COLOR_DISTANCE,
+          limitLines.value.xMiddle,
+          limitLines.value.xMiddle + LINE_COLOR_DISTANCE,
         ],
         COLORS,
       ),
     };
-  }, [textSize]);
+  }, [limitLines]);
 
   const bottomLineXStyle = useAnimatedStyle(() => {
-    const targetValue = Math.floor(
-      height -
-        insets.bottom -
-        VERTICAL_PADDING -
-        textSize.value.height -
-        LINE_HEIGHT,
-    );
-
     return {
       opacity: interpolate(
         translationY.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
-          targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          limitLines.value.xBottom - LINE_OPACITY_DISTANCE,
+          limitLines.value.xBottom,
+          limitLines.value.xBottom + LINE_OPACITY_DISTANCE,
         ],
         [0, 1, 0],
       ),
       backgroundColor: interpolateColor(
         translationY.value,
         [
-          targetValue - LINE_COLOR_DISTANCE,
-          targetValue,
-          targetValue + LINE_COLOR_DISTANCE,
+          limitLines.value.xBottom - LINE_COLOR_DISTANCE,
+          limitLines.value.xBottom,
+          limitLines.value.xBottom + LINE_COLOR_DISTANCE,
         ],
         COLORS,
       ),
     };
-  }, [textSize]);
+  }, [limitLines]);
 
   const leftLineYStyle = useAnimatedStyle(() => {
-    const targetValue =
-      -Math.floor(width / 2 - textSize.value.width / 2) +
-      HORIZONTAL_PADDING +
-      LINE_HEIGHT;
-
     return {
       opacity: interpolate(
         translationX.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
-          targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          limitLines.value.yLeft - LINE_OPACITY_DISTANCE,
+          limitLines.value.yLeft,
+          limitLines.value.yLeft + LINE_OPACITY_DISTANCE,
         ],
         [0, 1, 0],
       ),
       backgroundColor: interpolateColor(
         translationX.value,
         [
-          targetValue - LINE_COLOR_DISTANCE,
-          targetValue,
-          targetValue + LINE_COLOR_DISTANCE,
+          limitLines.value.yLeft - LINE_COLOR_DISTANCE,
+          limitLines.value.yLeft,
+          limitLines.value.yLeft + LINE_COLOR_DISTANCE,
         ],
         COLORS,
       ),
     };
-  }, [textSize]);
+  }, [limitLines]);
 
   const middleLineYStyle = useAnimatedStyle(() => {
-    const targetValue = 0;
-
     return {
       opacity: interpolate(
         translationX.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
-          targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          limitLines.value.yMiddle - LINE_OPACITY_DISTANCE,
+          limitLines.value.yMiddle,
+          limitLines.value.yMiddle + LINE_OPACITY_DISTANCE,
         ],
         [0, 1, 0],
       ),
       backgroundColor: interpolateColor(
         translationX.value,
         [
-          targetValue - LINE_COLOR_DISTANCE,
-          targetValue,
-          targetValue + LINE_COLOR_DISTANCE,
+          limitLines.value.yMiddle - LINE_COLOR_DISTANCE,
+          limitLines.value.yMiddle,
+          limitLines.value.yMiddle + LINE_COLOR_DISTANCE,
         ],
         COLORS,
       ),
     };
-  }, [textSize]);
+  }, [limitLines]);
 
   const rightLineYStyle = useAnimatedStyle(() => {
-    const targetValue =
-      Math.floor(width / 2 - textSize.value.width / 2) -
-      HORIZONTAL_PADDING -
-      LINE_HEIGHT;
-
     return {
       opacity: interpolate(
         translationX.value,
         [
-          targetValue - LINE_OPACITY_DISTANCE,
-          targetValue,
-          targetValue + LINE_OPACITY_DISTANCE,
+          limitLines.value.yRight - LINE_OPACITY_DISTANCE,
+          limitLines.value.yRight,
+          limitLines.value.yRight + LINE_OPACITY_DISTANCE,
         ],
         [0, 1, 0],
       ),
       backgroundColor: interpolateColor(
         translationX.value,
         [
-          targetValue - LINE_COLOR_DISTANCE,
-          targetValue,
-          targetValue + LINE_COLOR_DISTANCE,
+          limitLines.value.yRight - LINE_COLOR_DISTANCE,
+          limitLines.value.yRight,
+          limitLines.value.yRight + LINE_COLOR_DISTANCE,
         ],
         COLORS,
       ),
     };
-  }, [textSize]);
+  }, [limitLines]);
 
   const lines = [
     {
