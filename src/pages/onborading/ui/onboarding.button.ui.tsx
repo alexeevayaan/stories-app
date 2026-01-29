@@ -1,8 +1,9 @@
+import { router } from "expo-router";
 import { Pressable, useWindowDimensions } from "react-native";
 import Animated, {
-    interpolate,
-    SharedValue,
-    useAnimatedStyle,
+  interpolate,
+  SharedValue,
+  useAnimatedStyle,
 } from "react-native-reanimated";
 
 interface IProps {
@@ -69,7 +70,12 @@ export default function OnboardingButton(props: IProps) {
         },
       ]}
     >
-      <Pressable className={"flex-1 justify-center items-center"}>
+      <Pressable
+        className={"flex-1 justify-center items-center"}
+        onPress={() => {
+          router.replace("/stories");
+        }}
+      >
         <Animated.Text
           style={[
             animatedTextStyle,
@@ -77,6 +83,7 @@ export default function OnboardingButton(props: IProps) {
               fontSize: 16,
               fontWeight: "500",
               color: "white",
+              letterSpacing: 4,
             },
           ]}
         >

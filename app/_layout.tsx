@@ -15,11 +15,26 @@ export default function RootLayout() {
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="welcome" options={{ headerShown: false }} />
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="home" options={{ headerShown: false }} />
-          <Stack.Screen name="stories" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="index"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="welcome"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="onboarding"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="home"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="stories"
+            options={{ headerShown: false, animation: "fade" }}
+          />
         </Stack>
         <StatusBar style="auto" />
       </GestureHandlerRootView>
