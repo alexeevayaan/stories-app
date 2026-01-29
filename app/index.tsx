@@ -1,3 +1,5 @@
-import { HomeScreen } from "../src/pages/home/home.ui";
+import { Redirect } from "expo-router";
 
-export default HomeScreen;
+export default function Index() {
+  return <Redirect href={"/welcome"} />;
+}
