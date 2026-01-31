@@ -1,15 +1,4 @@
 import {
-  Dimensions,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextLayoutLine,
-  View,
-  ViewStyle
-} from "react-native";
-
-import {
   Blur,
   Canvas,
   ColorMatrix,
@@ -17,317 +6,369 @@ import {
   Paint,
   RoundedRect,
 } from "@shopify/react-native-skia";
-import { useLayoutEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  StyleSheet,
+  TextInput,
+  TextInputContentSizeChangeEvent,
+  TextLayoutLine,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useKeyboardHandler } from "react-native-keyboard-controller";
 import Animated, {
-  interpolate,
-  interpolateColor,
+  clamp,
+  Easing,
   SharedValue,
+  useAnimatedReaction,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StoriesEdit, StoriesLayout, StoriesPanel } from "./ui";
+import { useStories } from "./usecase";
 
-const { width, height } = Dimensions.get("screen");
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
-const IN_TO_LINE_INTERVAL = 2;
-const OUT_TO_LINE_INTERVAL = 48;
+interface ILayout {
+  width: number;
+  height: number;
+}
 
-const LINE_HEIGHT = 2;
-const VERTICAL_PADDING = 24;
-const HORIZONTAL_PADDING = 24;
-const LINE_OPACITY_DISTANCE = 8;
-const LINE_COLOR_DISTANCE = 1;
-const COLORS = ["#ffffff", "rgb(0, 165, 184)", "#ffffff"];
-
-function clamp(val: number, min: number, max: number) {
+const withTimingAnimation = (value: number, duration: number = 150) => {
   "worklet";
-  return Math.min(Math.max(val, min), max);
-}
-
-interface ILines {
-  xTop: number;
-  xMiddle: number;
-  xBottom: number;
-  yLeft: number;
-  yMiddle: number;
-  yRight: number;
-}
-
-interface ILimitLines extends ILines {}
-
-interface IActiveLines extends ILines {}
-
-const useGetPositions = () => {
-  const translationX = useSharedValue(0);
-  const translationY = useSharedValue(0);
-  const prevTranslationX = useSharedValue(0);
-  const prevTranslationY = useSharedValue(0);
-
-  return {
-    translationX,
-    translationY,
-    prevTranslationX,
-    prevTranslationY,
-  };
+  return withTiming(value, { duration, easing: Easing.linear });
 };
 
-export function StoriesScreen() {
-  const inputRef = useRef<TextInput>(null);
+type TPropsUseLayout = {
+  inputRef: RefObject<TextInput | null>;
+};
+
+const useLayout = (props: TPropsUseLayout) => {
+  const layout = useSharedValue<ILayout>({
+    width: 0,
+    height: 0,
+  });
+  const { inputRef } = props;
 
   useLayoutEffect(() => {
-    inputRef.current?.measure((_, __, w, h) => {
-      textSize.value.height = h;
-      textSize.value.width = w;
+    inputRef.current?.measure((x, y, w, h) => {
+      layout.value.width = w;
+      layout.value.height = h;
     });
-  });
+  }, []);
 
+  const onContentSizeChange = (e: TextInputContentSizeChangeEvent) => {
+    layout.value = {
+      width: e.nativeEvent.contentSize.width,
+      height: e.nativeEvent.contentSize.height,
+    };
+  };
+
+  return { layout, onContentSizeChange };
+};
+
+interface IPropsUseTransform {
+  layout: ReturnType<typeof useLayout>["layout"];
+  wrapperLayout: SharedValue<ILayout>;
+}
+
+const useTransform = (props: IPropsUseTransform) => {
+  const { layout, wrapperLayout } = props;
+
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const [text, setText] = useState("j oijfoiewji dsa dasd\n\n asd asd ");
+  const isFocused = useSharedValue(0);
+  const keyboradHeight = useSharedValue(0);
 
-  const [lines, setLines] = useState<TextLayoutLine[]>([]);
+  const offsetX = useSharedValue(
+    wrapperLayout.get().width / 2 - layout.get().width / 2,
+  );
+  const offsetY = useSharedValue(
+    wrapperLayout.get().height / 2 - layout.get().height / 2,
+  );
+  const savedOffsetX = useSharedValue(
+    wrapperLayout.get().width / 2 - layout.get().width / 2,
+  );
+  const savedOffsetY = useSharedValue(
+    wrapperLayout.get().height / 2 - layout.get().height / 2,
+  );
 
-  const ref = useRef<Text>(null);
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const rotation = useSharedValue(0);
+  const savedRotation = useSharedValue(0);
 
-  const textSize = useSharedValue({ width: 0, height: 0 });
-
-  const { translationX, translationY, prevTranslationX, prevTranslationY } =
-    useGetPositions();
-
-  const activeLines = useRef<IActiveLines>({
-    xTop: 0,
-    xMiddle: 0,
-    xBottom: 0,
-    yLeft: 0,
-    yMiddle: 0,
-    yRight: 0,
-  });
-
-  const limitLines = useDerivedValue<ILimitLines>(() => {
-    const xTop = Math.round(insets.top + VERTICAL_PADDING + LINE_HEIGHT);
-
-    const middle = (height - insets.bottom - insets.top) / 2;
-    const xMiddle = Math.round(
-      insets.top + middle + LINE_HEIGHT - textSize.value.height / 2,
-    );
-
-    const xBottom = Math.round(
-      height -
-        insets.bottom -
-        VERTICAL_PADDING -
-        textSize.value.height -
-        LINE_HEIGHT,
-    );
-
-    const yLeft =
-      -Math.round(width / 2 - textSize.value.width / 2) +
-      HORIZONTAL_PADDING +
-      LINE_HEIGHT;
-
-    const yMiddle = 0;
-
-    const yRight =
-      Math.round(width / 2 - textSize.value.width / 2) -
-      HORIZONTAL_PADDING -
-      LINE_HEIGHT;
-
+  const animatedStyles = useAnimatedStyle(() => {
     return {
-      xTop,
-      xMiddle,
-      xBottom,
-      yLeft,
-      yMiddle,
-      yRight,
+      transform: [
+        { translateX: offsetX.value },
+        { translateY: offsetY.value },
+        { scale: scale.value },
+        { rotateZ: `${rotation.value}rad` },
+      ],
+      position: "absolute",
+      width: isFocused ? width : "auto",
+      backgroundColor: "green",
     };
   });
 
-  const animatedStyles = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translationX.value },
-      { translateY: translationY.value },
-    ],
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  }));
+  const onFocus = () => {
+    isFocused.value = 1;
+    scale.value = withTimingAnimation(1);
+    rotation.value = withTimingAnimation(0);
+  };
 
-  function snap(
-    value: number,
-    target: number,
-    key: keyof IActiveLines,
-  ): number {
-    "worklet";
+  const onBlur = () => {
+    isFocused.value = 0;
 
-    const between = Math.abs(value - target);
+    scale.value = withTimingAnimation(savedScale.value);
+    rotation.value = withTimingAnimation(savedRotation.value);
+    offsetX.value = withTimingAnimation(savedOffsetX.value);
+    offsetY.value = withTimingAnimation(savedOffsetY.value);
+  };
 
-    if (between <= IN_TO_LINE_INTERVAL) {
-      if (!activeLines.current[key]) activeLines.current[key] = 1;
-
-      return target;
-    }
-
-    if (activeLines.current[key] && between <= OUT_TO_LINE_INTERVAL) {
-      if (!activeLines.current[key]) activeLines.current[key] = 1;
-
-      return target;
-    }
-
-    if (activeLines.current[key]) activeLines.current[key] = 0;
-
-    return value;
-  }
-
-  const cache = useRef({
-    local: {
-      x: 0,
-      y: 0,
+  useAnimatedReaction(
+    () => {
+      return {
+        layout,
+        isFocused,
+        keyboradHeight,
+        wrapperLayout,
+      };
     },
-    global: { x: 0, y: 0 },
+    (value) => {
+      "worklet";
+      const { layout, isFocused, keyboradHeight } = value;
+
+      if (!isFocused.value || !keyboradHeight.get()) return;
+
+      const empty = height - wrapperLayout.get().height - insets.top;
+
+      offsetX.value = width / 2 - layout.get().width / 2;
+      offsetY.value =
+        wrapperLayout.get().height / 2 -
+        layout.get().height / 2 -
+        clamp(
+          keyboradHeight.get() - empty,
+          empty,
+          Math.abs(keyboradHeight.get()),
+        ) /
+          2;
+    },
+    [],
+  );
+
+  useKeyboardHandler(
+    {
+      onStart: (e) => {
+        "worklet";
+        keyboradHeight.value = e.height;
+      },
+    },
+    [],
+  );
+
+  return {
+    offsetX,
+    offsetY,
+    savedOffsetX,
+    savedOffsetY,
+    scale,
+    savedScale,
+    rotation,
+    savedRotation,
+    animatedStyles,
+    onFocus,
+    onBlur,
+  };
+};
+
+type TPropsUseGesture = {
+  transform: ReturnType<typeof useTransform>;
+  inputRef: RefObject<TextInput | null>;
+};
+
+const useGesture = (props: TPropsUseGesture) => {
+  const {
+    transform: {
+      offsetX,
+      offsetY,
+      savedOffsetX,
+      savedOffsetY,
+      scale,
+      savedScale,
+      rotation,
+      savedRotation,
+    },
+    inputRef,
+  } = props;
+
+  const singleTap = Gesture.Tap()
+    .runOnJS(true)
+    .maxDuration(250)
+    .onStart(() => {
+      inputRef.current?.focus?.();
+      console.log("Single tap!");
+    });
+
+  const doubleTap = Gesture.Tap()
+    .runOnJS(true)
+    .maxDuration(250)
+    .numberOfTaps(2)
+    .onStart(() => {
+      console.log("Double tap!");
+    });
+
+  const tap = Gesture.Exclusive(doubleTap, singleTap);
+
+  const dragGesture = Gesture.Pan()
+    .averageTouches(true)
+    .onUpdate((e) => {
+      offsetX.value = savedOffsetX.value + e.translationX;
+      offsetY.value = savedOffsetY.value + e.translationY;
+    })
+    .onEnd(() => {
+      savedOffsetX.value = offsetX.value;
+      savedOffsetY.value = offsetY.value;
+    });
+
+  const zoomGesture = Gesture.Pinch()
+    .onUpdate((event) => {
+      scale.value = savedScale.value * event.scale;
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
+    });
+
+  const rotateGesture = Gesture.Rotation()
+    .onUpdate((event) => {
+      rotation.value = savedRotation.value + event.rotation;
+    })
+    .onEnd(() => {
+      savedRotation.value = rotation.value;
+    });
+
+  const composed = Gesture.Simultaneous(
+    dragGesture,
+    Gesture.Simultaneous(tap, zoomGesture, rotateGesture),
+  );
+
+  return composed;
+};
+
+interface IPropsItem {
+  id: string;
+  focusedId: SharedValue<string>;
+  wrapperLayout: SharedValue<ILayout>;
+}
+
+function Item(props: IPropsItem) {
+  const { focusedId, id } = props;
+  const inputRef = useRef<TextInput>(null);
+
+  const layout = useLayout({ inputRef });
+
+  const transform = useTransform({
+    layout: layout.layout,
+    wrapperLayout: props.wrapperLayout,
   });
 
-  function fixTraslation(
-    type: "x" | "y",
-    value: number,
-    target: number,
-    key: keyof IActiveLines,
-  ): number {
-    "worklet";
+  const composed = useGesture({ transform, inputRef });
 
-    const global =
-      type === "x" ? cache.current.global.x : cache.current.global.y;
-    const local = type === "x" ? cache.current.local.x : cache.current.local.y;
+  useEffect(() => {
+    inputRef.current?.focus?.();
+  }, []);
 
-    const visual = value - global;
-
-    const between = Math.abs(visual - target);
-
-    const isIn = between <= IN_TO_LINE_INTERVAL;
-    const isOut = between <= OUT_TO_LINE_INTERVAL;
-
-    if (isIn && !activeLines.current[key]) {
-      activeLines.current[key] = 1;
-
-      if (type === "x") cache.current.local.x = value;
-      else cache.current.local.y = value;
-    }
-
-    if (activeLines.current[key]) {
-      if (isOut) {
-        return target + global;
-      }
-
-      activeLines.current[key] = 0;
-
-      const delta = value - local;
-
-      if (type === "x") cache.current.global.x += delta;
-      else cache.current.global.y += delta;
-
-      return value;
-    }
-
-    return value;
-  }
-
-  const pan = Gesture.Pan()
-    .onStart(() => {
-      prevTranslationX.value = translationX.value;
-      prevTranslationY.value = translationY.value;
-
-      cache.current.global.x = 0;
-      cache.current.global.y = 0;
-
-      activeLines.current.xTop = 0;
-      activeLines.current.xMiddle = 0;
-      activeLines.current.xBottom = 0;
-      activeLines.current.yLeft = 0;
-      activeLines.current.yMiddle = 0;
-      activeLines.current.yRight = 0;
-    })
-    .onUpdate((event) => {
-      let x = prevTranslationX.value + event.translationX;
-      let y = prevTranslationY.value + event.translationY;
-
-      y = fixTraslation("y", y, limitLines.value.xMiddle, "xMiddle");
-      y = fixTraslation("y", y, limitLines.value.xBottom, "xBottom");
-      y = fixTraslation("y", y, limitLines.value.xTop, "xTop");
-
-      x = fixTraslation("x", x, limitLines.value.yLeft, "yLeft");
-      x = fixTraslation("x", x, limitLines.value.yMiddle, "yMiddle");
-      x = fixTraslation("x", x, limitLines.value.yRight, "yRight");
-
-      translationX.value = x - cache.current.global.x;
-      translationY.value = y - cache.current.global.y;
-    })
-    .runOnJS(true);
+  const [text, setText] = useState("s");
+  const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
   return (
-    <View
-      style={{
-        width,
-        height,
-        alignItems: "center",
-        backgroundColor: "#4343",
-      }}
-    >
-      <Lines
-        translationX={translationX}
-        translationY={translationY}
-        limitLines={limitLines}
-      />
-      <GestureDetector gesture={pan}>
-        <Animated.View style={animatedStyles}>
-          <View
+    <GestureDetector gesture={composed}>
+      <Animated.View style={transform.animatedStyles}>
+        <View style={{ flexDirection: "row" }}>
+          <SkiaBackground
+            lines={lines}
+            textIsEmpty={!text || text?.length === 0}
+          />
+          <AnimatedTextInput
+            value={text}
+            onChangeText={setText}
+            ref={inputRef}
+            multiline
+            scrollEnabled={false}
+            onFocus={() => {
+              focusedId.value = id;
+              transform.onFocus();
+            }}
+            onBlur={() => {
+              focusedId.value = "";
+              transform.onBlur();
+            }}
             style={{
+              textAlign: "center",
+              textAlignVertical: "center",
+              fontSize: 32,
+              color: "rgba(1,1,1,0)",
               ...resetStyles.reset,
-              flexDirection: "row",
+            }}
+            onContentSizeChange={layout.onContentSizeChange}
+            autoCorrect={false}
+            autoCapitalize="none"
+            selectTextOnFocus={false}
+            spellCheck
+          />
+          <Animated.Text
+            pointerEvents="none"
+            onTextLayout={(e) => {
+              setLines(e.nativeEvent.lines);
+            }}
+            style={{
+              textAlign: "center",
+              textAlignVertical: "center",
+              fontSize: 32,
+              color: "#000000",
+              ...resetStyles.reset,
+              ...StyleSheet.absoluteFillObject,
             }}
           >
-            <SkiaBackground
-              lines={lines}
-              textIsEmpty={!text || text?.length === 0}
-            />
-            <TextInput
-              ref={inputRef}
-              value={text}
-              onChangeText={setText}
-              multiline={true}
-              scrollEnabled={false}
-              placeholder="Type here..."
-              style={{
-                textAlign: "center",
-                textAlignVertical: "center",
-                fontSize: 24,
-                color: "transparent",
-                ...resetStyles.reset,
-              }}
-              onContentSizeChange={(e) => {
-                textSize.value = e.nativeEvent.contentSize;
-              }}
-            />
-            <Text
-              ref={ref}
-              pointerEvents="none"
-              onTextLayout={(e) => {
-                setLines(e.nativeEvent.lines);
-              }}
-              style={{
-                textAlign: "center",
-                textAlignVertical: "center",
-                fontSize: 24,
-                color: "#000000",
-                ...StyleSheet.absoluteFillObject,
-                ...resetStyles.reset,
-              }}
-            >
-              {text}
-            </Text>
-          </View>
-        </Animated.View>
-      </GestureDetector>
-    </View>
+            {text}
+          </Animated.Text>
+        </View>
+      </Animated.View>
+    </GestureDetector>
+  );
+}
+
+export function StoriesScreen() {
+  const wrapperLayout = useSharedValue<ILayout>({
+    width: 0,
+    height: 0,
+  });
+
+  const storiesServise = useStories();
+
+  const focusedId = useSharedValue<string>("");
+
+  return (
+    <StoriesLayout layout={wrapperLayout}>
+      <StoriesPanel create={storiesServise.create} />
+      {storiesServise.stories.map((i) => {
+        return (
+          <Item
+            key={i.id}
+            id={i.id}
+            focusedId={focusedId}
+            wrapperLayout={wrapperLayout}
+          />
+        );
+      })}
+
+      <StoriesEdit focusedId={focusedId} />
+    </StoriesLayout>
   );
 }
 
@@ -412,243 +453,5 @@ const SkiaBackground = ({ lines, textIsEmpty }: IPropsSkiaBackground) => {
           })}
       </Group>
     </Canvas>
-  );
-};
-
-interface IPropsLines {
-  translationX: SharedValue<number>;
-  translationY: SharedValue<number>;
-  limitLines: SharedValue<ILimitLines>;
-}
-
-const Lines = ({ translationX, translationY, limitLines }: IPropsLines) => {
-  const insets = useSafeAreaInsets();
-
-  const topLineXStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        translationY.value,
-        [
-          limitLines.value.xTop - LINE_OPACITY_DISTANCE,
-          limitLines.value.xTop,
-          limitLines.value.xTop + LINE_OPACITY_DISTANCE,
-        ],
-        [0, 1, 0],
-      ),
-      backgroundColor: interpolateColor(
-        translationY.value,
-        [
-          limitLines.value.xTop - LINE_COLOR_DISTANCE,
-          limitLines.value.xTop,
-          limitLines.value.xTop + LINE_COLOR_DISTANCE,
-        ],
-        COLORS,
-      ),
-    };
-  }, [limitLines]);
-
-  const middleLineXStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        translationY.value,
-        [
-          limitLines.value.xMiddle - LINE_OPACITY_DISTANCE,
-          limitLines.value.xMiddle,
-          limitLines.value.xMiddle + LINE_OPACITY_DISTANCE,
-        ],
-        [0, 1, 0],
-      ),
-      backgroundColor: interpolateColor(
-        translationY.value,
-        [
-          limitLines.value.xMiddle - LINE_COLOR_DISTANCE,
-          limitLines.value.xMiddle,
-          limitLines.value.xMiddle + LINE_COLOR_DISTANCE,
-        ],
-        COLORS,
-      ),
-    };
-  }, [limitLines]);
-
-  const bottomLineXStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        translationY.value,
-        [
-          limitLines.value.xBottom - LINE_OPACITY_DISTANCE,
-          limitLines.value.xBottom,
-          limitLines.value.xBottom + LINE_OPACITY_DISTANCE,
-        ],
-        [0, 1, 0],
-      ),
-      backgroundColor: interpolateColor(
-        translationY.value,
-        [
-          limitLines.value.xBottom - LINE_COLOR_DISTANCE,
-          limitLines.value.xBottom,
-          limitLines.value.xBottom + LINE_COLOR_DISTANCE,
-        ],
-        COLORS,
-      ),
-    };
-  }, [limitLines]);
-
-  const leftLineYStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        translationX.value,
-        [
-          limitLines.value.yLeft - LINE_OPACITY_DISTANCE,
-          limitLines.value.yLeft,
-          limitLines.value.yLeft + LINE_OPACITY_DISTANCE,
-        ],
-        [0, 1, 0],
-      ),
-      backgroundColor: interpolateColor(
-        translationX.value,
-        [
-          limitLines.value.yLeft - LINE_COLOR_DISTANCE,
-          limitLines.value.yLeft,
-          limitLines.value.yLeft + LINE_COLOR_DISTANCE,
-        ],
-        COLORS,
-      ),
-    };
-  }, [limitLines]);
-
-  const middleLineYStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        translationX.value,
-        [
-          limitLines.value.yMiddle - LINE_OPACITY_DISTANCE,
-          limitLines.value.yMiddle,
-          limitLines.value.yMiddle + LINE_OPACITY_DISTANCE,
-        ],
-        [0, 1, 0],
-      ),
-      backgroundColor: interpolateColor(
-        translationX.value,
-        [
-          limitLines.value.yMiddle - LINE_COLOR_DISTANCE,
-          limitLines.value.yMiddle,
-          limitLines.value.yMiddle + LINE_COLOR_DISTANCE,
-        ],
-        COLORS,
-      ),
-    };
-  }, [limitLines]);
-
-  const rightLineYStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        translationX.value,
-        [
-          limitLines.value.yRight - LINE_OPACITY_DISTANCE,
-          limitLines.value.yRight,
-          limitLines.value.yRight + LINE_OPACITY_DISTANCE,
-        ],
-        [0, 1, 0],
-      ),
-      backgroundColor: interpolateColor(
-        translationX.value,
-        [
-          limitLines.value.yRight - LINE_COLOR_DISTANCE,
-          limitLines.value.yRight,
-          limitLines.value.yRight + LINE_COLOR_DISTANCE,
-        ],
-        COLORS,
-      ),
-    };
-  }, [limitLines]);
-
-  const lines = [
-    {
-      style: [
-        {
-          width: "100%",
-          height: LINE_HEIGHT,
-          position: "absolute",
-          top: VERTICAL_PADDING + insets.top,
-        },
-        topLineXStyle,
-      ],
-    },
-    {
-      style: [
-        {
-          width: "100%",
-          height: LINE_HEIGHT,
-          position: "absolute",
-          bottom: (height - insets.bottom - LINE_HEIGHT) / 2,
-        },
-        middleLineXStyle,
-      ],
-    },
-    {
-      style: [
-        {
-          width: "100%",
-          height: LINE_HEIGHT,
-          position: "absolute",
-          bottom: VERTICAL_PADDING + insets.bottom,
-        },
-        bottomLineXStyle,
-      ],
-    },
-    {
-      style: [
-        {
-          width: LINE_HEIGHT,
-          height: "100%",
-          position: "absolute",
-          left: HORIZONTAL_PADDING,
-          backgroundColor: "#8282ff",
-        },
-        leftLineYStyle,
-      ],
-    },
-    {
-      style: [
-        {
-          width: LINE_HEIGHT,
-          height: "100%",
-          position: "absolute",
-          left: width / 2 - LINE_HEIGHT / 2,
-          backgroundColor: "#8282ff",
-        },
-        middleLineYStyle,
-      ],
-    },
-    {
-      style: [
-        {
-          width: LINE_HEIGHT,
-          height: "100%",
-          position: "absolute",
-          right: HORIZONTAL_PADDING,
-          backgroundColor: "#8282ff",
-        },
-        rightLineYStyle,
-      ],
-    },
-  ];
-
-  return (
-    <View
-      pointerEvents="none"
-      style={{
-        ...StyleSheet.absoluteFillObject,
-      }}
-    >
-      {lines.map((item, index) => {
-        return (
-          <Animated.View
-            key={index}
-            style={item.style as StyleProp<ViewStyle>[]}
-          />
-        );
-      })}
-    </View>
   );
 };

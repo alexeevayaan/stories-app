@@ -1,31 +1,31 @@
 import {
-    Dimensions,
-    StyleProp,
-    StyleSheet,
-    Text,
-    TextInput,
-    TextLayoutLine,
-    View,
-    ViewStyle,
+  Dimensions,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextLayoutLine,
+  View,
+  ViewStyle,
 } from "react-native";
 
 import {
-    Blur,
-    Canvas,
-    ColorMatrix,
-    Group,
-    Paint,
-    RoundedRect,
+  Blur,
+  Canvas,
+  ColorMatrix,
+  Group,
+  Paint,
+  RoundedRect,
 } from "@shopify/react-native-skia";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-    interpolate,
-    interpolateColor,
-    SharedValue,
-    useAnimatedStyle,
-    useDerivedValue,
-    useSharedValue,
+  interpolate,
+  interpolateColor,
+  SharedValue,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
