@@ -363,8 +363,12 @@ function Item(props: IPropsItem) {
               fontSize: 32,
               color: "rgba(1,1,1,0)",
               ...resetStyles.reset,
-              ...StyleSheet.absoluteFillObject,
               opacity: 1,
+              position: "absolute",
+              left: 0,
+              right: 0,
+              width: "100%",
+              bottom: 0,
             }}
             autoCorrect={false}
             autoCapitalize="none"
