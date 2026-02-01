@@ -1,0 +1,98 @@
+import { useEffect, useRef, useState } from "react";
+import { TextInput, TextLayoutLine, View } from "react-native";
+import { GestureDetector } from "react-native-gesture-handler";
+import Animated, { SharedValue } from "react-native-reanimated";
+import { resetStyles } from "../config";
+import { ILayout, useGesture, useLayout, useTransform } from "../usecase";
+import { SkiaBackground } from "./stories.skia.background";
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
+interface IPropsItem {
+  id: string;
+  focusedId: SharedValue<string>;
+  wrapperLayout: SharedValue<ILayout>;
+}
+
+export function Item(props: IPropsItem) {
+  const { focusedId, id } = props;
+  const inputRef = useRef<TextInput>(null);
+
+  const layout = useLayout({ inputRef });
+
+  const transform = useTransform({
+    layout: layout.layout,
+    wrapperLayout: props.wrapperLayout,
+  });
+
+  const composed = useGesture({ transform, inputRef });
+
+  useEffect(() => {
+    inputRef.current?.focus?.();
+  }, []);
+
+  const [text, setText] = useState("s");
+  const [lines, setLines] = useState<TextLayoutLine[]>([]);
+
+  return (
+    <GestureDetector gesture={composed}>
+      <Animated.View style={transform.animatedStyles}>
+        <View style={{ flexDirection: "row" }}>
+          <SkiaBackground
+            lines={lines}
+            textIsEmpty={!text || text?.length === 0}
+          />
+          <AnimatedTextInput
+            pointerEvents={"none"}
+            value={text}
+            onChangeText={setText}
+            ref={inputRef}
+            multiline
+            scrollEnabled={false}
+            onFocus={() => {
+              focusedId.value = id;
+              transform.onFocus();
+            }}
+            onBlur={() => {
+              focusedId.value = "";
+              transform.onBlur();
+            }}
+            style={{
+              textAlign: "center",
+              textAlignVertical: "center",
+              fontSize: 32,
+              color: "rgba(1,1,1,0)",
+              ...resetStyles.reset,
+              opacity: 1,
+              position: "absolute",
+              left: 0,
+              right: 0,
+              width: "100%",
+              bottom: 0,
+            }}
+            autoCorrect={false}
+            autoCapitalize="none"
+            selectTextOnFocus={false}
+            spellCheck
+            onContentSizeChange={layout.onContentSizeChange}
+          />
+          <Animated.Text
+            pointerEvents="none"
+            onTextLayout={(e) => {
+              setLines(e.nativeEvent.lines);
+            }}
+            style={{
+              textAlign: "center",
+              textAlignVertical: "center",
+              fontSize: 32,
+              color: "#000000",
+              ...resetStyles.reset,
+            }}
+          >
+            {text}
+          </Animated.Text>
+        </View>
+      </Animated.View>
+    </GestureDetector>
+  );
+}

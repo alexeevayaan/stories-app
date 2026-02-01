@@ -2,7 +2,7 @@ import { useState } from "react";
 
 type storyType = "text" | "image";
 
-interface IStory {
+export interface IStory {
   id: string;
   type: storyType;
 }
