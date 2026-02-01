@@ -55,7 +55,7 @@ const useLayout = (props: TPropsUseLayout) => {
   const { inputRef } = props;
 
   useLayoutEffect(() => {
-    inputRef.current?.measure((x, y, w, h) => {
+    inputRef.current?.measure((_, __, w, h) => {
       layout.value.width = w;
       layout.value.height = h;
     });
@@ -85,17 +85,28 @@ const useTransform = (props: IPropsUseTransform) => {
   const isFocused = useSharedValue(0);
   const keyboardHeight = useSharedValue(0);
 
-  const offsetX = useSharedValue(
-    wrapperLayout.get().width / 2 - layout.get().width / 2,
+  const centerX = useDerivedValue(
+    () => wrapperLayout.value.width / 2 - layout.value.width / 2,
   );
-  const offsetY = useSharedValue(
-    wrapperLayout.get().height / 2 - layout.get().height / 2,
+  const centerY = useDerivedValue(
+    () => wrapperLayout.value.height / 2 - layout.value.height / 2,
   );
-  const savedOffsetX = useSharedValue(
-    wrapperLayout.get().width / 2 - layout.get().width / 2,
-  );
-  const savedOffsetY = useSharedValue(
-    wrapperLayout.get().height / 2 - layout.get().height / 2,
+
+  const offsetX = useSharedValue(centerX.value);
+  const offsetY = useSharedValue(centerY.value);
+  const savedOffsetX = useSharedValue(centerX.value);
+  const savedOffsetY = useSharedValue(centerY.value);
+
+  useAnimatedReaction(
+    () => layout.value,
+    (_, prevValue) => {
+      if (prevValue?.height === 0 && prevValue?.width === 0) {
+        offsetX.value = centerX.value;
+        savedOffsetX.value = centerX.value;
+        offsetY.value = centerY.value;
+        savedOffsetY.value = centerY.value;
+      }
+    },
   );
 
   const scale = useSharedValue(1);
@@ -116,10 +127,10 @@ const useTransform = (props: IPropsUseTransform) => {
   });
 
   const onFocus = () => {
-    isFocused.value = 1;
-
     scale.value = withTimingAnimation(1);
     rotation.value = withTimingAnimation(0);
+
+    isFocused.value = 1;
   };
 
   const onBlur = () => {
@@ -143,20 +154,20 @@ const useTransform = (props: IPropsUseTransform) => {
     },
     (value) => {
       "worklet";
-      const { layout, isFocused, keyboardHeight } = value;
+      const { layout, isFocused, keyboardHeight, wrapperLayout } = value;
 
       if (!isFocused.value || !keyboardHeight.get()) return;
 
-      const empty = height - wrapperLayout.get().height - insets.top;
+      const empty = height - wrapperLayout.value.height - insets.top;
 
       offsetX.value = withTimingAnimation(width / 2 - layout.get().width / 2);
       offsetY.value = withTimingAnimation(
-        wrapperLayout.get().height / 2 -
-          layout.get().height / 2 -
+        wrapperLayout.value.height / 2 -
+          layout.value.height / 2 -
           clamp(
-            keyboardHeight.get() - empty,
+            keyboardHeight.value - empty,
             empty,
-            Math.abs(keyboardHeight.get()),
+            Math.abs(keyboardHeight.value),
           ) /
             2,
       );
@@ -179,7 +190,23 @@ const useTransform = (props: IPropsUseTransform) => {
     [],
   );
 
-  const safeWidth = useDerivedValue(() => {});
+  useAnimatedReaction(
+    () => layout.value.width,
+    (value, prevValue) => {
+      if (!prevValue) return;
+      savedOffsetX.value = savedOffsetX.value - (value - prevValue) / 2;
+    },
+    [],
+  );
+
+  useAnimatedReaction(
+    () => layout.value.height,
+    (value, prevValue) => {
+      if (!prevValue) return;
+      savedOffsetY.value = savedOffsetY.value - (value - prevValue) / 2;
+    },
+    [],
+  );
 
   useKeyboardHandler(
     {
