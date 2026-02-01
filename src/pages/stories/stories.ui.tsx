@@ -23,6 +23,7 @@ import Animated, {
   SharedValue,
   useAnimatedReaction,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
@@ -82,7 +83,7 @@ const useTransform = (props: IPropsUseTransform) => {
   const insets = useSafeAreaInsets();
 
   const isFocused = useSharedValue(0);
-  const keyboradHeight = useSharedValue(0);
+  const keyboardHeight = useSharedValue(0);
 
   const offsetX = useSharedValue(
     wrapperLayout.get().width / 2 - layout.get().width / 2,
@@ -111,13 +112,12 @@ const useTransform = (props: IPropsUseTransform) => {
         { rotateZ: `${rotation.value}rad` },
       ],
       position: "absolute",
-      width: isFocused ? width : "auto",
-      backgroundColor: "green",
     };
   });
 
   const onFocus = () => {
     isFocused.value = 1;
+
     scale.value = withTimingAnimation(1);
     rotation.value = withTimingAnimation(0);
   };
@@ -127,6 +127,7 @@ const useTransform = (props: IPropsUseTransform) => {
 
     scale.value = withTimingAnimation(savedScale.value);
     rotation.value = withTimingAnimation(savedRotation.value);
+
     offsetX.value = withTimingAnimation(savedOffsetX.value);
     offsetY.value = withTimingAnimation(savedOffsetY.value);
   };
@@ -136,37 +137,55 @@ const useTransform = (props: IPropsUseTransform) => {
       return {
         layout,
         isFocused,
-        keyboradHeight,
+        keyboardHeight,
         wrapperLayout,
       };
     },
     (value) => {
       "worklet";
-      const { layout, isFocused, keyboradHeight } = value;
+      const { layout, isFocused, keyboardHeight } = value;
 
-      if (!isFocused.value || !keyboradHeight.get()) return;
+      if (!isFocused.value || !keyboardHeight.get()) return;
 
       const empty = height - wrapperLayout.get().height - insets.top;
 
-      offsetX.value = width / 2 - layout.get().width / 2;
-      offsetY.value =
+      offsetX.value = withTimingAnimation(width / 2 - layout.get().width / 2);
+      offsetY.value = withTimingAnimation(
         wrapperLayout.get().height / 2 -
-        layout.get().height / 2 -
-        clamp(
-          keyboradHeight.get() - empty,
-          empty,
-          Math.abs(keyboradHeight.get()),
-        ) /
-          2;
+          layout.get().height / 2 -
+          clamp(
+            keyboardHeight.get() - empty,
+            empty,
+            Math.abs(keyboardHeight.get()),
+          ) /
+            2,
+      );
     },
     [],
   );
+
+  const safeHeight = useDerivedValue(() => {
+    return Math.min(
+      (height - keyboardHeight.value - insets.top) / layout.value.height,
+      1,
+    );
+  });
+
+  useAnimatedReaction(
+    () => safeHeight.value,
+    (newScale) => {
+      scale.value = newScale;
+    },
+    [],
+  );
+
+  const safeWidth = useDerivedValue(() => {});
 
   useKeyboardHandler(
     {
       onStart: (e) => {
         "worklet";
-        keyboradHeight.value = e.height;
+        keyboardHeight.value = e.height;
       },
     },
     [],
@@ -212,21 +231,19 @@ const useGesture = (props: TPropsUseGesture) => {
     .maxDuration(250)
     .onStart(() => {
       inputRef.current?.focus?.();
-      console.log("Single tap!");
     });
 
   const doubleTap = Gesture.Tap()
     .runOnJS(true)
     .maxDuration(250)
     .numberOfTaps(2)
-    .onStart(() => {
-      console.log("Double tap!");
-    });
+    .onStart(() => {});
 
   const tap = Gesture.Exclusive(doubleTap, singleTap);
 
   const dragGesture = Gesture.Pan()
     .averageTouches(true)
+    .onStart(() => {})
     .onUpdate((e) => {
       offsetX.value = savedOffsetX.value + e.translationX;
       offsetY.value = savedOffsetY.value + e.translationY;
@@ -237,19 +254,19 @@ const useGesture = (props: TPropsUseGesture) => {
     });
 
   const zoomGesture = Gesture.Pinch()
+    .onStart(() => {
+      savedScale.value = scale.value;
+    })
     .onUpdate((event) => {
       scale.value = savedScale.value * event.scale;
-    })
-    .onEnd(() => {
-      savedScale.value = scale.value;
     });
 
   const rotateGesture = Gesture.Rotation()
+    .onStart(() => {
+      savedRotation.value = rotation.value;
+    })
     .onUpdate((event) => {
       rotation.value = savedRotation.value + event.rotation;
-    })
-    .onEnd(() => {
-      savedRotation.value = rotation.value;
     });
 
   const composed = Gesture.Simultaneous(
@@ -295,6 +312,7 @@ function Item(props: IPropsItem) {
             textIsEmpty={!text || text?.length === 0}
           />
           <AnimatedTextInput
+            pointerEvents={"none"}
             value={text}
             onChangeText={setText}
             ref={inputRef}
@@ -314,12 +332,14 @@ function Item(props: IPropsItem) {
               fontSize: 32,
               color: "rgba(1,1,1,0)",
               ...resetStyles.reset,
+              ...StyleSheet.absoluteFillObject,
+              opacity: 1,
             }}
-            onContentSizeChange={layout.onContentSizeChange}
             autoCorrect={false}
             autoCapitalize="none"
             selectTextOnFocus={false}
             spellCheck
+            onContentSizeChange={layout.onContentSizeChange}
           />
           <Animated.Text
             pointerEvents="none"
@@ -332,7 +352,6 @@ function Item(props: IPropsItem) {
               fontSize: 32,
               color: "#000000",
               ...resetStyles.reset,
-              ...StyleSheet.absoluteFillObject,
             }}
           >
             {text}
