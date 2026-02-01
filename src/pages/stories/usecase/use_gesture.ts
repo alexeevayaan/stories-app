@@ -51,19 +51,19 @@ export const useGesture = (props: TPropsUseGesture) => {
     });
 
   const zoomGesture = Gesture.Pinch()
-    .onStart(() => {
-      savedScale.value = scale.value;
-    })
     .onUpdate((event) => {
       scale.value = savedScale.value * event.scale;
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
     });
 
   const rotateGesture = Gesture.Rotation()
-    .onStart(() => {
-      savedRotation.value = rotation.value;
-    })
     .onUpdate((event) => {
       rotation.value = savedRotation.value + event.rotation;
+    })
+    .onEnd(() => {
+      savedRotation.value = rotation.value;
     });
 
   const composed = Gesture.Simultaneous(
