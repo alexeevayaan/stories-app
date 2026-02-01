@@ -1,5 +1,4 @@
 import { useWindowDimensions } from "react-native";
-import { useKeyboardHandler } from "react-native-keyboard-controller";
 import {
   clamp,
   SharedValue,
@@ -10,6 +9,7 @@ import {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { withTimingAnimation } from "../lib";
+import { useKeyboard } from "./use_keyboard";
 import { ILayout, useLayout } from "./use_layout";
 
 interface IPropsUseTransform {
@@ -20,66 +20,33 @@ interface IPropsUseTransform {
 export const useTransform = (props: IPropsUseTransform) => {
   const { layout, wrapperLayout } = props;
 
+  const keyboardHeight = useKeyboard();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const isFocused = useSharedValue(0);
-  const keyboardHeight = useSharedValue(0);
-
-  const centerX = useDerivedValue(
-    () => wrapperLayout.value.width / 2 - layout.value.width / 2,
-  );
-  const centerY = useDerivedValue(
-    () => wrapperLayout.value.height / 2 - layout.value.height / 2,
-  );
-
-  const offsetX = useSharedValue(centerX.value);
-  const offsetY = useSharedValue(centerY.value);
-  const savedOffsetX = useSharedValue(centerX.value);
-  const savedOffsetY = useSharedValue(centerY.value);
-
-  useAnimatedReaction(
-    () => layout.value,
-    (_, prevValue) => {
-      if (prevValue?.height === 0 && prevValue?.width === 0) {
-        offsetX.value = centerX.value;
-        savedOffsetX.value = centerX.value;
-        offsetY.value = centerY.value;
-        savedOffsetY.value = centerY.value;
-      }
-    },
-  );
-
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-  const rotation = useSharedValue(0);
-  const savedRotation = useSharedValue(0);
-
-  const animatedStyles = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: offsetX.value },
-        { translateY: offsetY.value },
-        { scale: scale.value },
-        { rotateZ: `${rotation.value}rad` },
-      ],
-      position: "absolute",
-    };
-  });
+  const {
+    offsetX,
+    offsetY,
+    savedOffsetX,
+    savedOffsetY,
+    scale,
+    savedScale,
+    rotation,
+    savedRotation,
+    isFocused,
+    animatedStyles,
+  } = useValues(props);
 
   const onFocus = () => {
     scale.value = withTimingAnimation(1);
     rotation.value = withTimingAnimation(0);
-
     isFocused.value = 1;
   };
 
   const onBlur = () => {
     isFocused.value = 0;
-
     scale.value = withTimingAnimation(savedScale.value);
     rotation.value = withTimingAnimation(savedRotation.value);
-
     offsetX.value = withTimingAnimation(savedOffsetX.value);
     offsetY.value = withTimingAnimation(savedOffsetY.value);
   };
@@ -102,6 +69,7 @@ export const useTransform = (props: IPropsUseTransform) => {
       const empty = height - wrapperLayout.value.height - insets.top;
 
       offsetX.value = withTimingAnimation(width / 2 - layout.get().width / 2);
+
       offsetY.value = withTimingAnimation(
         wrapperLayout.value.height / 2 -
           layout.value.height / 2 -
@@ -153,16 +121,6 @@ export const useTransform = (props: IPropsUseTransform) => {
     [],
   );
 
-  useKeyboardHandler(
-    {
-      onStart: (e) => {
-        "worklet";
-        keyboardHeight.value = e.height;
-      },
-    },
-    [],
-  );
-
   return {
     offsetX,
     offsetY,
@@ -175,5 +133,65 @@ export const useTransform = (props: IPropsUseTransform) => {
     animatedStyles,
     onFocus,
     onBlur,
+  };
+};
+
+const useValues = (props: IPropsUseTransform) => {
+  const { layout, wrapperLayout } = props;
+
+  const isFocused = useSharedValue(0);
+
+  const centerX = useDerivedValue(
+    () => wrapperLayout.value.width / 2 - layout.value.width / 2,
+  );
+  const centerY = useDerivedValue(
+    () => wrapperLayout.value.height / 2 - layout.value.height / 2,
+  );
+
+  const offsetX = useSharedValue(centerX.value);
+  const offsetY = useSharedValue(centerY.value);
+  const savedOffsetX = useSharedValue(centerX.value);
+  const savedOffsetY = useSharedValue(centerY.value);
+
+  useAnimatedReaction(
+    () => layout.value,
+    (_, prevValue) => {
+      if (prevValue?.height === 0 && prevValue?.width === 0) {
+        offsetX.value = centerX.value;
+        savedOffsetX.value = centerX.value;
+        offsetY.value = centerY.value;
+        savedOffsetY.value = centerY.value;
+      }
+    },
+  );
+
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const rotation = useSharedValue(0);
+  const savedRotation = useSharedValue(0);
+
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: offsetX.value },
+        { translateY: offsetY.value },
+        { scale: scale.value },
+        { rotateZ: `${rotation.value}rad` },
+      ],
+      position: "absolute",
+    };
+  });
+
+  return {
+    offsetX,
+    offsetY,
+    savedOffsetX,
+    savedOffsetY,
+    scale,
+    savedScale,
+    rotation,
+    savedRotation,
+    isFocused,
+    animatedStyles,
   };
 };
