@@ -8,6 +8,7 @@ export const useKeyboard = () => {
     {
       onStart: (e) => {
         "worklet";
+        if (!e.height) return;
         keyboardHeight.value = e.height;
       },
     },
