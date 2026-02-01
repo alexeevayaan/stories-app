@@ -1,4 +1,10 @@
-import { Keyboard, Pressable, StyleSheet } from "react-native";
+import {
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
 import Animated, {
   interpolate,
   SharedValue,
@@ -6,13 +12,14 @@ import Animated, {
   useDerivedValue,
   withTiming,
 } from "react-native-reanimated";
-
+const offset = { closed: 0, opened: -20 };
 interface IProps {
   focusedId: SharedValue<string>;
 }
 
 export default function StoriesEdit(props: IProps) {
   const { focusedId } = props;
+  const { width } = useWindowDimensions();
 
   const show = useDerivedValue(() => {
     return focusedId.value ? 1 : 0;
@@ -35,11 +42,28 @@ export default function StoriesEdit(props: IProps) {
       ]}
     >
       <Pressable
-        style={StyleSheet.absoluteFillObject}
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            justifyContent: "flex-end",
+            alignItems: "center",
+          },
+        ]}
         onPress={() => {
           Keyboard.dismiss();
         }}
-      />
+      >
+        <KeyboardStickyView offset={offset}>
+          <Animated.View
+            style={{
+              width: width - 44,
+              height: 44,
+              backgroundColor: "orange",
+              borderRadius: 12,
+            }}
+          ></Animated.View>
+        </KeyboardStickyView>
+      </Pressable>
     </Animated.View>
   );
 }

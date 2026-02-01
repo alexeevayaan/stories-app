@@ -31,7 +31,7 @@ export function Item(props: IPropsItem) {
     inputRef.current?.focus?.();
   }, []);
 
-  const [text, setText] = useState("s");
+  const [text, setText] = useState("");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
   return (

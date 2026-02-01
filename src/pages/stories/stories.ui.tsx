@@ -1,3 +1,4 @@
+import { View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { Item, StoriesEdit, StoriesLayout, StoriesPanel } from "./ui";
 import { ILayout, type IStory, useStories } from "./usecase";
@@ -24,10 +25,16 @@ export function StoriesScreen() {
   };
 
   return (
-    <StoriesLayout layout={wrapperLayout}>
-      <StoriesPanel create={storiesServise.create} />
-      {storiesServise.stories.map(renderItem)}
+    <View
+      style={{
+        flex: 1,
+      }}
+    >
+      <StoriesLayout layout={wrapperLayout}>
+        <StoriesPanel create={storiesServise.create} />
+        {storiesServise.stories.map(renderItem)}
+      </StoriesLayout>
       <StoriesEdit focusedId={focusedId} />
-    </StoriesLayout>
+    </View>
   );
 }

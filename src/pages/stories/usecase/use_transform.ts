@@ -17,6 +17,11 @@ interface IPropsUseTransform {
   wrapperLayout: SharedValue<ILayout>;
 }
 
+const PADDING = 16;
+const FROM_BOTTOM = 64 + PADDING;
+const FROM_TOP = 56 + PADDING;
+const SOME_VALUES = FROM_BOTTOM + FROM_TOP;
+
 export const useTransform = (props: IPropsUseTransform) => {
   const { layout, wrapperLayout } = props;
 
@@ -66,13 +71,15 @@ export const useTransform = (props: IPropsUseTransform) => {
 
       if (!isFocused.value || !keyboardHeight.get()) return;
 
-      const empty = height - wrapperLayout.value.height - insets.top;
+      const empty =
+        height - wrapperLayout.value.height - insets.top - FROM_BOTTOM;
 
       offsetX.value = withTimingAnimation(width / 2 - layout.get().width / 2);
 
+      const center =
+        (wrapperLayout.value.height - layout.value.height + FROM_TOP) / 2;
       offsetY.value = withTimingAnimation(
-        wrapperLayout.value.height / 2 -
-          layout.value.height / 2 -
+        center -
           clamp(
             keyboardHeight.value - empty,
             empty,
@@ -86,7 +93,8 @@ export const useTransform = (props: IPropsUseTransform) => {
 
   const safeHeight = useDerivedValue(() => {
     return Math.min(
-      (height - keyboardHeight.value - insets.top) / layout.value.height,
+      (height - keyboardHeight.value - insets.top - SOME_VALUES) /
+        layout.value.height,
       1,
     );
   });
