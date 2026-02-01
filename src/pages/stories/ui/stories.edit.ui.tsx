@@ -29,7 +29,7 @@ export default function StoriesEdit(props: IProps) {
       style={[
         {
           ...StyleSheet.absoluteFillObject,
-          backgroundColor: "green",
+          backgroundColor: "rgba(0, 0, 0, 0.70)",
         },
         style,
       ]}

@@ -183,27 +183,31 @@ const useTransform = (props: IPropsUseTransform) => {
   });
 
   useAnimatedReaction(
-    () => safeHeight.value,
-    (newScale) => {
+    () => [safeHeight.value, isFocused.value],
+    ([newScale, isFocused]) => {
+      if (!isFocused) return;
+
       scale.value = newScale;
     },
     [],
   );
 
   useAnimatedReaction(
-    () => layout.value.width,
-    (value, prevValue) => {
-      if (!prevValue) return;
-      savedOffsetX.value = savedOffsetX.value - (value - prevValue) / 2;
+    () => [layout.value.width, isFocused.value],
+    ([layoutWidth, isFocused], prevValue) => {
+      if (!isFocused || !prevValue?.[0]) return;
+      savedOffsetX.value =
+        savedOffsetX.value - (layoutWidth - prevValue[0]) / 2;
     },
     [],
   );
 
   useAnimatedReaction(
-    () => layout.value.height,
-    (value, prevValue) => {
-      if (!prevValue) return;
-      savedOffsetY.value = savedOffsetY.value - (value - prevValue) / 2;
+    () => [layout.value.height, isFocused.value],
+    ([layoutHeight, isFocused], prevValue) => {
+      if (!isFocused || !prevValue?.[0]) return;
+      savedOffsetY.value =
+        savedOffsetY.value - (layoutHeight - prevValue[0]) / 2;
     },
     [],
   );
