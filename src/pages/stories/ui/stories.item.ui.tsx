@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { TextInput, TextLayoutLine, View } from "react-native";
+import { StyleSheet, TextInput, TextLayoutLine, View } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated, { SharedValue } from "react-native-reanimated";
-import { resetStyles } from "../config";
 import { ILayout, useGesture, useLayout, useTransform } from "../usecase";
 import { SkiaBackground } from "./stories.skia.background";
 
@@ -31,7 +30,7 @@ export function Item(props: IPropsItem) {
     inputRef.current?.focus?.();
   }, []);
 
-  const [text, setText] = useState("");
+  const [text, setText] = useState("s");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
   return (
@@ -62,13 +61,14 @@ export function Item(props: IPropsItem) {
               textAlignVertical: "center",
               fontSize: 32,
               color: "rgba(1,1,1,0)",
-              ...resetStyles.reset,
               opacity: 1,
-              position: "absolute",
-              left: 0,
-              right: 0,
-              width: "100%",
-              bottom: 0,
+
+              paddingTop: 0,
+              paddingBottom: 0,
+              paddingRight: 0,
+              marginTop: 0,
+              marginBottom: 0,
+              marginRight: 0,
             }}
             autoCorrect={false}
             autoCapitalize="none"
@@ -86,7 +86,7 @@ export function Item(props: IPropsItem) {
               textAlignVertical: "center",
               fontSize: 32,
               color: "#000000",
-              ...resetStyles.reset,
+              ...StyleSheet.absoluteFillObject,
             }}
           >
             {text}
