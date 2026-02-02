@@ -141,6 +141,7 @@ export const useTransform = (props: IPropsUseTransform) => {
     animatedStyles,
     onFocus,
     onBlur,
+    isFocused,
   };
 };
 
@@ -187,6 +188,7 @@ const useValues = (props: IPropsUseTransform) => {
         { rotateZ: `${rotation.value}rad` },
       ],
       position: "absolute",
+      zIndex: isFocused.value ? 10000000 : 0,
     };
   });
 

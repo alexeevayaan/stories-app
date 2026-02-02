@@ -19,6 +19,7 @@ export const useGesture = (props: TPropsUseGesture) => {
       savedScale,
       rotation,
       savedRotation,
+      isFocused,
     },
     inputRef,
   } = props;
@@ -26,6 +27,9 @@ export const useGesture = (props: TPropsUseGesture) => {
   const singleTap = Gesture.Tap()
     .runOnJS(true)
     .maxDuration(250)
+    .onTouchesMove((_, state) => {
+      if (isFocused.value) state.fail();
+    })
     .onStart(() => {
       inputRef.current?.focus?.();
     });
@@ -34,12 +38,18 @@ export const useGesture = (props: TPropsUseGesture) => {
     .runOnJS(true)
     .maxDuration(250)
     .numberOfTaps(2)
+    .onTouchesMove((_, state) => {
+      if (isFocused.value) state.fail();
+    })
     .onStart(() => {});
 
   const tap = Gesture.Exclusive(doubleTap, singleTap);
 
   const dragGesture = Gesture.Pan()
     .averageTouches(true)
+    .onTouchesMove((_, state) => {
+      if (isFocused.value) state.fail();
+    })
     .onStart(() => {})
     .onUpdate((e) => {
       offsetX.value = savedOffsetX.value + e.translationX;
@@ -51,6 +61,9 @@ export const useGesture = (props: TPropsUseGesture) => {
     });
 
   const zoomGesture = Gesture.Pinch()
+    .onTouchesMove((_, state) => {
+      if (isFocused.value) state.fail();
+    })
     .onUpdate((event) => {
       scale.value = savedScale.value * event.scale;
     })
@@ -59,6 +72,9 @@ export const useGesture = (props: TPropsUseGesture) => {
     });
 
   const rotateGesture = Gesture.Rotation()
+    .onTouchesMove((_, state) => {
+      if (isFocused.value) state.fail();
+    })
     .onUpdate((event) => {
       rotation.value = savedRotation.value + event.rotation;
     })

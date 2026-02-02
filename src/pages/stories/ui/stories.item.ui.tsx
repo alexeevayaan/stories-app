@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, TextInput, TextLayoutLine, View } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated, { SharedValue } from "react-native-reanimated";
@@ -26,11 +26,7 @@ export function Item(props: IPropsItem) {
 
   const composed = useGesture({ transform, inputRef });
 
-  useEffect(() => {
-    inputRef.current?.focus?.();
-  }, []);
-
-  const [text, setText] = useState("s");
+  const [text, setText] = useState(" ");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
   return (
@@ -42,9 +38,14 @@ export function Item(props: IPropsItem) {
             textIsEmpty={!text || text?.length === 0}
           />
           <AnimatedTextInput
+            cursorColor={"white"}
+            selectionColor={"white"}
+            autoFocus
             pointerEvents={"none"}
             value={text}
-            onChangeText={setText}
+            onChangeText={(text) => {
+              setText(text.trimStart());
+            }}
             ref={inputRef}
             multiline
             scrollEnabled={false}
@@ -70,10 +71,7 @@ export function Item(props: IPropsItem) {
               marginBottom: 0,
               marginRight: 0,
             }}
-            autoCorrect={false}
-            autoCapitalize="none"
             selectTextOnFocus={false}
-            spellCheck
             onContentSizeChange={layout.onContentSizeChange}
           />
           <Animated.Text

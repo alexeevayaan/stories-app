@@ -12,21 +12,30 @@ import Animated, {
   useDerivedValue,
   withTiming,
 } from "react-native-reanimated";
-const offset = { closed: 0, opened: -20 };
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 interface IProps {
   focusedId: SharedValue<string>;
 }
 
 export default function StoriesEdit(props: IProps) {
   const { focusedId } = props;
-  const { width } = useWindowDimensions();
+
+  const { width, height } = useWindowDimensions();
+
+  const insets = useSafeAreaInsets();
+
+  const offset = {
+    closed: 0,
+    opened: height - width * (16 / 9) - insets.top - 20,
+  };
 
   const show = useDerivedValue(() => {
     return focusedId.value ? 1 : 0;
   }, [props.focusedId]);
 
   const style = useAnimatedStyle(() => ({
-    opacity: withTiming(interpolate(show.value, [0, 1], [0, 0.4]), {
+    opacity: withTiming(interpolate(show.value, [0, 1], [0, 1]), {
       duration: 150,
     }),
   }));
@@ -36,7 +45,7 @@ export default function StoriesEdit(props: IProps) {
       style={[
         {
           ...StyleSheet.absoluteFillObject,
-          backgroundColor: "rgba(0, 0, 0, 0.70)",
+          backgroundColor: "rgba(0, 0, 0, 0.40)",
         },
         style,
       ]}

@@ -33,8 +33,8 @@ export function StoriesScreen() {
       <StoriesLayout layout={wrapperLayout}>
         <StoriesPanel create={storiesServise.create} />
         {storiesServise.stories.map(renderItem)}
+        <StoriesEdit focusedId={focusedId} />
       </StoriesLayout>
-      <StoriesEdit focusedId={focusedId} />
     </View>
   );
 }
