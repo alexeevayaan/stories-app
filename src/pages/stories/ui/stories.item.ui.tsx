@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { StyleSheet, TextInput, TextLayoutLine, View } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated, { SharedValue } from "react-native-reanimated";
+import { resetStyles } from "../config";
 import { ILayout, useGesture, useLayout, useTransform } from "../usecase";
 import { SkiaBackground } from "./stories.skia.background";
 
@@ -32,7 +33,7 @@ export function Item(props: IPropsItem) {
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={transform.animatedStyles}>
-        <View style={{ flexDirection: "row" }}>
+        <View>
           <SkiaBackground
             lines={lines}
             textIsEmpty={!text || text?.length === 0}
@@ -64,17 +65,22 @@ export function Item(props: IPropsItem) {
               color: "rgba(1,1,1,0)",
               opacity: 1,
 
-              paddingTop: 0,
-              paddingBottom: 0,
-              paddingRight: 0,
-              marginTop: 0,
-              marginBottom: 0,
-              marginRight: 0,
+              ...resetStyles.reset,
             }}
             selectTextOnFocus={false}
-            onContentSizeChange={layout.onContentSizeChange}
+            // onContentSizeChange={layout.onContentSizeChange}
           />
           <Animated.Text
+            onLayout={(e) => {
+              layout.onContentSizeChange({
+                nativeEvent: {
+                  contentSize: {
+                    width: e.nativeEvent.layout.width,
+                    height: e.nativeEvent.layout.height,
+                  },
+                },
+              } as any);
+            }}
             pointerEvents="none"
             onTextLayout={(e) => {
               setLines(e.nativeEvent.lines);
@@ -84,6 +90,7 @@ export function Item(props: IPropsItem) {
               textAlignVertical: "center",
               fontSize: 32,
               color: "#000000",
+              ...resetStyles.reset,
               ...StyleSheet.absoluteFillObject,
             }}
           >
