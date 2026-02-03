@@ -41,7 +41,7 @@ export function Item(props: IPropsItem) {
   const [text, setText] = useState(" ");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
-  const colorUi = useSharedValue<string>("#212121");
+  const colorUi = useSharedValue<string>("#FFFFFF");
   const backgroundColorUi = useSharedValue<string>("rgba(1,1,1,0)");
 
   useImperativeHandle(ref, () => {
