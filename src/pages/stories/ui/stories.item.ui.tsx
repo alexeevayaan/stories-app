@@ -1,21 +1,32 @@
-import { useRef, useState } from "react";
-import { StyleSheet, TextInput, TextLayoutLine, View } from "react-native";
+import { RefObject, useImperativeHandle, useRef, useState } from "react";
+import { StyleSheet, TextInput, TextLayoutLine } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
-import Animated, { SharedValue } from "react-native-reanimated";
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { resetStyles } from "../config";
+import { withTimingAnimation } from "../lib";
 import { ILayout, useGesture, useLayout, useTransform } from "../usecase";
 import { SkiaBackground } from "./stories.skia.background";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
+export interface IImperativeItemHandlers {
+  setColor: (color: string) => void;
+  setBackgroundColor: (color: string) => void;
+}
+
 interface IPropsItem {
   id: string;
   focusedId: SharedValue<string>;
   wrapperLayout: SharedValue<ILayout>;
+  ref: RefObject<IImperativeItemHandlers>;
 }
 
 export function Item(props: IPropsItem) {
-  const { focusedId, id } = props;
+  const { focusedId, id, ref } = props;
   const inputRef = useRef<TextInput>(null);
 
   const layout = useLayout({ inputRef });
@@ -30,13 +41,36 @@ export function Item(props: IPropsItem) {
   const [text, setText] = useState(" ");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
+  const colorUi = useSharedValue<string>("#212121");
+  const backgroundColorUi = useSharedValue<string>("rgba(1,1,1,0)");
+
+  useImperativeHandle(ref, () => {
+    return {
+      setColor(c) {
+        "worklet";
+        colorUi.value = withTimingAnimation<string>(c);
+      },
+      setBackgroundColor(c) {
+        "worklet";
+        backgroundColorUi.value = withTimingAnimation<string>(c);
+      },
+    };
+  });
+
+  const animatedTextStyle = useAnimatedStyle(() => {
+    return {
+      color: colorUi.value,
+    };
+  });
+
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={transform.animatedStyles}>
-        <View>
+        <Animated.View>
           <SkiaBackground
             lines={lines}
             textIsEmpty={!text || text?.length === 0}
+            backgroundColor={backgroundColorUi}
           />
           <AnimatedTextInput
             cursorColor={"white"}
@@ -68,7 +102,6 @@ export function Item(props: IPropsItem) {
               ...resetStyles.reset,
             }}
             selectTextOnFocus={false}
-            // onContentSizeChange={layout.onContentSizeChange}
           />
           <Animated.Text
             onLayout={(e) => {
@@ -85,18 +118,20 @@ export function Item(props: IPropsItem) {
             onTextLayout={(e) => {
               setLines(e.nativeEvent.lines);
             }}
-            style={{
-              textAlign: "center",
-              textAlignVertical: "center",
-              fontSize: 32,
-              color: "#000000",
-              ...resetStyles.reset,
-              ...StyleSheet.absoluteFillObject,
-            }}
+            style={[
+              {
+                textAlign: "center",
+                textAlignVertical: "center",
+                fontSize: 32,
+                ...resetStyles.reset,
+                ...StyleSheet.absoluteFillObject,
+              },
+              animatedTextStyle,
+            ]}
           >
             {text}
           </Animated.Text>
-        </View>
+        </Animated.View>
       </Animated.View>
     </GestureDetector>
   );

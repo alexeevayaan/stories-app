@@ -7,16 +7,21 @@ import {
   RoundedRect,
 } from "@shopify/react-native-skia";
 import { StyleSheet, TextLayoutLine } from "react-native";
+import {
+  SharedValue
+} from "react-native-reanimated";
 import { resetStyles } from "../config";
 
 interface IPropsSkiaBackground {
   lines: TextLayoutLine[];
   textIsEmpty: boolean;
+  backgroundColor: SharedValue<string>;
 }
 
 export const SkiaBackground = ({
   lines,
   textIsEmpty,
+  backgroundColor,
 }: IPropsSkiaBackground) => {
   return (
     <Canvas
@@ -27,7 +32,7 @@ export const SkiaBackground = ({
       }}
     >
       <Group
-        color="orange"
+        color={backgroundColor}
         dither={true}
         layer={
           <Paint>

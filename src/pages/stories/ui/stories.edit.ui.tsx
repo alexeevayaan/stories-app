@@ -1,7 +1,9 @@
+import { RefObject } from "react";
 import {
   Keyboard,
   Pressable,
   StyleSheet,
+  Text,
   useWindowDimensions,
 } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
@@ -10,16 +12,18 @@ import Animated, {
   SharedValue,
   useAnimatedStyle,
   useDerivedValue,
-  withTiming,
+  withTiming
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { IImperativeItemHandlers } from "./stories.item.ui";
 
 interface IProps {
   focusedId: SharedValue<string>;
+  refs: RefObject<Map<string, IImperativeItemHandlers>>;
 }
 
 export default function StoriesEdit(props: IProps) {
-  const { focusedId } = props;
+  const { focusedId, refs } = props;
 
   const { width, height } = useWindowDimensions();
 
@@ -70,7 +74,28 @@ export default function StoriesEdit(props: IProps) {
               backgroundColor: "orange",
               borderRadius: 12,
             }}
-          ></Animated.View>
+          >
+            <Pressable
+              onPress={() => {
+                "worklet";
+
+                const itemRef = refs.current.get(focusedId.value);
+                itemRef?.setColor("#424242");
+              }}
+            >
+              <Text>red</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                "worklet";
+
+                const itemRef = refs.current.get(focusedId.value);
+                itemRef?.setColor("#848812");
+              }}
+            >
+              <Text>blue</Text>
+            </Pressable>
+          </Animated.View>
         </KeyboardStickyView>
       </Pressable>
     </Animated.View>
