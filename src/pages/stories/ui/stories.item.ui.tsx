@@ -41,36 +41,51 @@ export function Item(props: IPropsItem) {
   const [text, setText] = useState(" ");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
-  const colorUi = useSharedValue<string>("#FFFFFF");
-  const backgroundColorUi = useSharedValue<string>("rgba(1,1,1,0)");
+  const colorUI = useSharedValue<string>("#FFFFFF");
+  const backgroundColorUI = useSharedValue<string>("rgba(122,42,1,1)");
 
   useImperativeHandle(ref, () => {
     return {
       setColor(c) {
         "worklet";
-        colorUi.value = withTimingAnimation<string>(c);
+        colorUI.value = withTimingAnimation<string>(c);
       },
       setBackgroundColor(c) {
         "worklet";
-        backgroundColorUi.value = withTimingAnimation<string>(c);
+        backgroundColorUI.value = withTimingAnimation<string>(c);
       },
     };
   });
 
   const animatedTextStyle = useAnimatedStyle(() => {
     return {
-      color: colorUi.value,
+      color: colorUI.value,
     };
   });
 
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={transform.animatedStyles}>
-        <Animated.View>
+        <Animated.View
+          style={{
+            width: "100.0001%",
+            height: "100.0001%",
+          }}
+          onLayout={(e) => {
+            layout.onContentSizeChange({
+              nativeEvent: {
+                contentSize: {
+                  width: e.nativeEvent.layout.width,
+                  height: e.nativeEvent.layout.height,
+                },
+              },
+            } as any);
+          }}
+        >
           <SkiaBackground
             lines={lines}
             textIsEmpty={!text || text?.length === 0}
-            backgroundColor={backgroundColorUi}
+            backgroundColor={backgroundColorUI}
           />
           <AnimatedTextInput
             cursorColor={"white"}
@@ -96,24 +111,13 @@ export function Item(props: IPropsItem) {
               textAlign: "center",
               textAlignVertical: "center",
               fontSize: 32,
+              lineHeight: 34,
               color: "rgba(1,1,1,0)",
-              opacity: 1,
-
               ...resetStyles.reset,
             }}
             selectTextOnFocus={false}
           />
           <Animated.Text
-            onLayout={(e) => {
-              layout.onContentSizeChange({
-                nativeEvent: {
-                  contentSize: {
-                    width: e.nativeEvent.layout.width,
-                    height: e.nativeEvent.layout.height,
-                  },
-                },
-              } as any);
-            }}
             pointerEvents="none"
             onTextLayout={(e) => {
               setLines(e.nativeEvent.lines);
@@ -123,8 +127,11 @@ export function Item(props: IPropsItem) {
                 textAlign: "center",
                 textAlignVertical: "center",
                 fontSize: 32,
+                lineHeight: 34,
                 ...resetStyles.reset,
                 ...StyleSheet.absoluteFillObject,
+                width: "100%",
+                height: "100%",
               },
               animatedTextStyle,
             ]}
