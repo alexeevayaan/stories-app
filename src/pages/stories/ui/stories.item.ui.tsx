@@ -86,7 +86,7 @@ export function Item(props: IPropsItem) {
     return {
       transform: [
         {
-          translateX: -(width - 24 - layout.layout.value.width) / 2,
+          translateX: -(width - 0.4 - layout.layout.value.width) / 2,
         },
       ],
     };
@@ -112,7 +112,7 @@ export function Item(props: IPropsItem) {
               justifyContent: "center",
               alignItems: "center",
               flexDirection: "row",
-              maxWidth: width - 24,
+              maxWidth: width - 0.4,
             },
           ]}
         >
@@ -150,8 +150,7 @@ export function Item(props: IPropsItem) {
                 ...StyleSheet.absoluteFillObject,
                 fontFamily:
                   storiesFontStyle.DancingScriptRegular.style.fontFamily,
-                width: width - 24,
-                height: "100.001%",
+                width: width - 0.4,
                 pointerEvents: "none",
               },
               animatedTextFontStyle,
@@ -174,6 +173,11 @@ export function Item(props: IPropsItem) {
                 zIndex: 1000000,
                 opacity: 1,
                 flexWrap: "nowrap",
+                flexShrink: 1,
+                flexGrow: 1,
+                width: "100%",
+                maxWidth: width - 0.4,
+                overflow: "visible",
               },
               animatedTextStyle,
               animatedTextFontStyle,
