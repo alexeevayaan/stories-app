@@ -1,9 +1,4 @@
-import {
-  RefObject,
-  useImperativeHandle,
-  useRef,
-  useState
-} from "react";
+import { RefObject, useImperativeHandle, useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -207,19 +202,11 @@ export function Item(props: IPropsItem) {
               animatedTextFontStyle,
             ]}
           >
-            <Text
-              style={{
-                fontSize: 6,
-                width: 0.1,
-              }}
-            >
-              {" "}
-            </Text>
             {text}
             <Text
               style={{
-                fontSize: 6,
                 width: 0.1,
+                fontSize: 1,
               }}
             >
               {" "}
