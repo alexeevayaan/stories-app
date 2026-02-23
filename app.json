@@ -29,6 +29,32 @@
     },
     "plugins": [
       [
+        "expo-font",
+        {
+          "fonts": [
+            "./src/shared/assets/fonts/Roboto-Black.ttf",
+            "./src/shared/assets/fonts/Roboto-BlackItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-Bold.ttf",
+            "./src/shared/assets/fonts/Roboto-BoldItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-ExtraBold.ttf",
+            "./src/shared/assets/fonts/Roboto-ExtraBoldItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-ExtraLight.ttf",
+            "./src/shared/assets/fonts/Roboto-ExtraLightItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-Italic.ttf",
+            "./src/shared/assets/fonts/Roboto-Light.ttf",
+            "./src/shared/assets/fonts/Roboto-LightItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-Medium.ttf",
+            "./src/shared/assets/fonts/Roboto-MediumItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-Regular.ttf",
+            "./src/shared/assets/fonts/Roboto-SemiBold.ttf",
+            "./src/shared/assets/fonts/Roboto-SemiBoldItalic.ttf",
+            "./src/shared/assets/fonts/Roboto-Thin.ttf",
+            "./src/shared/assets/fonts/Roboto-ThinItalic.ttf",
+            "./src/shared/assets/fonts/RubikStorm-Regular.ttf"
+          ]
+        }
+      ],
+      [
         "expo-router",
         {
           "root": "app"

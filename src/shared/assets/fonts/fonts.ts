@@ -1,0 +1,23 @@
+export const fonts = {
+  RobotoBlack: "Roboto-Black",
+  RobotoBlackItalic: "Roboto-BlackItalic",
+  RobotoBold: "Roboto-Bold",
+  RobotoBoldItalic: "Roboto-BoldItalic",
+  RobotoExtraBold: "Roboto-ExtraBold",
+  RobotoExtraBoldItalic: "Roboto-ExtraBoldItalic",
+  RobotoExtraLight: "Roboto-ExtraLight",
+  RobotoExtraLightItalic: "Roboto-ExtraLightItalic",
+  RobotoItalic: "Roboto-Italic",
+  RobotoLight: "Roboto-Light",
+  RobotoLightItalic: "Roboto-LightItalic",
+  RobotoMedium: "Roboto-Medium",
+  RobotoMediumItalic: "Roboto-MediumItalic",
+  RobotoRegular: "Roboto-Regular",
+  RobotoSemiBold: "Roboto-SemiBold",
+  RobotoSemiBoldItalic: "Roboto-SemiBoldItalic",
+  RobotoThin: "Roboto-Thin",
+  RobotoThinItalic: "Roboto-ThinItalic",
+  RubikStormRegular: "RubikStorm-Regular",
+};
+
+export type TFonts = keyof typeof fonts;
