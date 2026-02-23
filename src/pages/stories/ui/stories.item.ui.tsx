@@ -95,6 +95,7 @@ export function Item(props: IPropsItem) {
     <GestureDetector gesture={composed}>
       <Animated.View style={[transform.animatedStyles]}>
         <Animated.View
+          pointerEvents={"none"}
           onLayout={(e) => {
             layout.onContentSizeChange({
               nativeEvent: {
@@ -153,7 +154,6 @@ export function Item(props: IPropsItem) {
                 fontFamily:
                   storiesFontStyle.DancingScriptRegular.style.fontFamily,
                 width: width - 0.4,
-                pointerEvents: "none",
               },
               animatedTextFontStyle,
               inputStyle,
