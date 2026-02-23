@@ -1,6 +1,5 @@
 import { RefObject, useImperativeHandle, useRef, useState } from "react";
 import {
-  StyleSheet,
   Text,
   TextInput,
   TextLayoutLine,
@@ -147,7 +146,11 @@ export function Item(props: IPropsItem) {
                 textAlignVertical: "center",
                 color: "rgba(1,1,1,0)",
                 ...resetStyles.reset,
-                ...StyleSheet.absoluteFillObject,
+                // ...StyleSheet.absoluteFillObject,
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
                 fontFamily:
                   storiesFontStyle.DancingScriptRegular.style.fontFamily,
                 width: width - 0.4,
