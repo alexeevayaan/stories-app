@@ -15,6 +15,7 @@ import { ILayout, useLayout } from "./use_layout";
 interface IPropsUseTransform {
   layout: ReturnType<typeof useLayout>["layout"];
   wrapperLayout: SharedValue<ILayout>;
+  textAlign: "left" | "right" | "center";
 }
 
 const PADDING = 16;
@@ -23,7 +24,7 @@ const FROM_TOP = 56 + PADDING;
 const SOME_VALUES = FROM_BOTTOM + FROM_TOP;
 
 export const useTransform = (props: IPropsUseTransform) => {
-  const { layout, wrapperLayout } = props;
+  const { layout, wrapperLayout, textAlign } = props;
 
   const keyboardHeight = useKeyboard();
   const { width, height } = useWindowDimensions();
@@ -74,7 +75,19 @@ export const useTransform = (props: IPropsUseTransform) => {
       const empty =
         height - wrapperLayout.value.height - insets.top - FROM_BOTTOM;
 
-      offsetX.value = withTimingAnimation(width / 2 - layout.get().width / 2);
+      switch (textAlign) {
+        case "left":
+          offsetX.value = 0;
+          break;
+        case "right":
+          offsetX.value = width - layout.get().width;
+          break;
+        case "center":
+          offsetX.value = withTimingAnimation(
+            width / 2 - layout.get().width / 2,
+          );
+          break;
+      }
 
       const center =
         (wrapperLayout.value.height - layout.value.height + FROM_TOP) / 2;
@@ -88,7 +101,7 @@ export const useTransform = (props: IPropsUseTransform) => {
             2,
       );
     },
-    [],
+    [textAlign],
   );
 
   const safeHeight = useDerivedValue(() => {
@@ -113,10 +126,20 @@ export const useTransform = (props: IPropsUseTransform) => {
     () => [layout.value.width, isFocused.value],
     ([layoutWidth, isFocused], prevValue) => {
       if (!isFocused || !prevValue?.[0]) return;
-      savedOffsetX.value =
-        savedOffsetX.value - (layoutWidth - prevValue[0]) / 2;
+
+      switch (textAlign) {
+        case "center":
+          savedOffsetX.value =
+            savedOffsetX.value - (layoutWidth - prevValue[0]) / 2;
+          break;
+        case "right":
+          savedOffsetX.value = width - layoutWidth;
+          break;
+        case "left":
+          savedOffsetX.value = 0;
+      }
     },
-    [],
+    [textAlign],
   );
 
   useAnimatedReaction(

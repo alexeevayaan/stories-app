@@ -1,5 +1,11 @@
-import { RefObject, useImperativeHandle, useRef, useState } from "react";
 import {
+  RefObject,
+  useImperativeHandle,
+  useRef,
+  useState
+} from "react";
+import {
+  StyleSheet,
   Text,
   TextInput,
   TextLayoutLine,
@@ -33,6 +39,11 @@ interface IPropsItem {
 
 export function Item(props: IPropsItem) {
   const { focusedId, id, ref } = props;
+
+  const [textAlign, setTextAlign] = useState<"left" | "right" | "center">(
+    "center",
+  );
+
   const inputRef = useRef<TextInput>(null);
 
   const layout = useLayout({ inputRef });
@@ -40,6 +51,7 @@ export function Item(props: IPropsItem) {
   const transform = useTransform({
     layout: layout.layout,
     wrapperLayout: props.wrapperLayout,
+    textAlign: textAlign,
   });
 
   const composed = useGesture({ transform, inputRef });
@@ -85,11 +97,14 @@ export function Item(props: IPropsItem) {
     return {
       transform: [
         {
-          translateX: -(width - 0.4 - layout.layout.value.width) / 2,
+          translateX:
+            textAlign === "center"
+              ? -(width - 0 - layout.layout.value.width) / 2
+              : 0,
         },
       ],
     };
-  });
+  }, [textAlign]);
 
   return (
     <GestureDetector gesture={composed}>
@@ -121,45 +136,53 @@ export function Item(props: IPropsItem) {
             textIsEmpty={!text || text?.length === 0}
             backgroundColor={backgroundColorUI}
           />
-          <AnimatedTextInput
-            cursorColor={"white"}
-            selectionColor={"white"}
-            autoFocus
-            pointerEvents={"none"}
-            value={text}
-            onChangeText={(text) => {
-              setText(text.trimStart());
+          <Animated.View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              overflow: "hidden",
             }}
-            ref={inputRef}
-            multiline
-            scrollEnabled={false}
-            onFocus={() => {
-              focusedId.value = id;
-              transform.onFocus();
-            }}
-            onBlur={() => {
-              focusedId.value = "";
-              transform.onBlur();
-            }}
-            style={[
-              {
-                textAlign: "center",
-                textAlignVertical: "center",
-                color: "rgba(1,1,1,0)",
-                ...resetStyles.reset,
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 0,
-                fontFamily:
-                  storiesFontStyle.DancingScriptRegular.style.fontFamily,
-                width: width - 0.4,
-              },
-              animatedTextFontStyle,
-              inputStyle,
-            ]}
-            selectTextOnFocus={false}
-          />
+          >
+            <AnimatedTextInput
+              cursorColor={"white"}
+              selectionColor={"white"}
+              autoFocus
+              pointerEvents={"none"}
+              value={text}
+              onChangeText={(text) => {
+                setText(text);
+              }}
+              ref={inputRef}
+              multiline
+              scrollEnabled={false}
+              onFocus={() => {
+                focusedId.value = id;
+                transform.onFocus();
+              }}
+              onBlur={() => {
+                focusedId.value = "";
+                transform.onBlur();
+              }}
+              style={[
+                {
+                  textAlign: textAlign,
+                  textAlignVertical: "center",
+                  color: "rgba(1,1,1,0)",
+                  ...resetStyles.reset,
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  fontFamily:
+                    storiesFontStyle.DancingScriptRegular.style.fontFamily,
+                  width: width - 0.4,
+                },
+                animatedTextFontStyle,
+                inputStyle,
+              ]}
+              selectTextOnFocus={false}
+            />
+          </Animated.View>
+
           <Animated.Text
             ref={textRef}
             onTextLayout={(e) => {
@@ -167,7 +190,7 @@ export function Item(props: IPropsItem) {
             }}
             style={[
               {
-                textAlign: "center",
+                textAlign: textAlign,
                 textAlignVertical: "center",
                 ...resetStyles.reset,
                 fontFamily:
@@ -184,7 +207,23 @@ export function Item(props: IPropsItem) {
               animatedTextFontStyle,
             ]}
           >
+            <Text
+              style={{
+                fontSize: 6,
+                width: 0.1,
+              }}
+            >
+              {" "}
+            </Text>
             {text}
+            <Text
+              style={{
+                fontSize: 6,
+                width: 0.1,
+              }}
+            >
+              {" "}
+            </Text>
           </Animated.Text>
         </Animated.View>
       </Animated.View>
