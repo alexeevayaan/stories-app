@@ -50,7 +50,12 @@
             "./src/shared/assets/fonts/Roboto-SemiBoldItalic.ttf",
             "./src/shared/assets/fonts/Roboto-Thin.ttf",
             "./src/shared/assets/fonts/Roboto-ThinItalic.ttf",
-            "./src/shared/assets/fonts/RubikStorm-Regular.ttf"
+            "./src/shared/assets/fonts/RubikStorm-Regular.ttf",
+            "./src/shared/assets/fonts/BetaniaPatmosIn-Regular.ttf",
+            "./src/shared/assets/fonts/BitcountGridDouble-Medium.ttf",
+            "./src/shared/assets/fonts/Bungee-Regular.ttf",
+            "./src/shared/assets/fonts/DancingScript-Regular.ttf",
+            "./src/shared/assets/fonts/Pacifico-Regular.ttf"
           ]
         }
       ],

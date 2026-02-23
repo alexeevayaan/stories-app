@@ -1,5 +1,11 @@
 import { RefObject, useImperativeHandle, useRef, useState } from "react";
-import { StyleSheet, TextInput, TextLayoutLine } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TextLayoutLine,
+  useWindowDimensions,
+} from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   SharedValue,
@@ -7,6 +13,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { resetStyles } from "../config";
+import { storiesFontStyle } from "../config/font.style";
 import { withTimingAnimation } from "../lib";
 import { ILayout, useGesture, useLayout, useTransform } from "../usecase";
 import { SkiaBackground } from "./stories.skia.background";
@@ -38,11 +45,12 @@ export function Item(props: IPropsItem) {
 
   const composed = useGesture({ transform, inputRef });
 
-  const [text, setText] = useState(" ");
+  const [text, setText] = useState("hello");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
   const colorUI = useSharedValue<string>("#FFFFFF");
   const backgroundColorUI = useSharedValue<string>("rgba(122,42,1,1)");
+  const fontSize = useSharedValue<number>(32);
 
   useImperativeHandle(ref, () => {
     return {
@@ -63,14 +71,31 @@ export function Item(props: IPropsItem) {
     };
   });
 
+  const animatedTextFontStyle = useAnimatedStyle(() => {
+    return {
+      fontSize: fontSize.value,
+      lineHeight: fontSize.value + 8,
+    };
+  });
+
+  const textRef = useRef<Text>(null);
+
+  const { width } = useWindowDimensions();
+
+  const inputStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: -(width - 24 - layout.layout.value.width) / 2,
+        },
+      ],
+    };
+  });
+
   return (
     <GestureDetector gesture={composed}>
-      <Animated.View style={transform.animatedStyles}>
+      <Animated.View style={[transform.animatedStyles]}>
         <Animated.View
-          style={{
-            width: "100.0001%",
-            height: "100.0001%",
-          }}
           onLayout={(e) => {
             layout.onContentSizeChange({
               nativeEvent: {
@@ -81,6 +106,15 @@ export function Item(props: IPropsItem) {
               },
             } as any);
           }}
+          style={[
+            {
+              overflow: "visible",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "row",
+              maxWidth: width - 24,
+            },
+          ]}
         >
           <SkiaBackground
             lines={lines}
@@ -107,18 +141,26 @@ export function Item(props: IPropsItem) {
               focusedId.value = "";
               transform.onBlur();
             }}
-            style={{
-              textAlign: "center",
-              textAlignVertical: "center",
-              fontSize: 32,
-              lineHeight: 34,
-              color: "rgba(1,1,1,0)",
-              ...resetStyles.reset,
-            }}
+            style={[
+              {
+                textAlign: "center",
+                textAlignVertical: "center",
+                color: "rgba(1,1,1,0)",
+                ...resetStyles.reset,
+                ...StyleSheet.absoluteFillObject,
+                fontFamily:
+                  storiesFontStyle.DancingScriptRegular.style.fontFamily,
+                width: width - 24,
+                height: "100.001%",
+                pointerEvents: "none",
+              },
+              animatedTextFontStyle,
+              inputStyle,
+            ]}
             selectTextOnFocus={false}
           />
           <Animated.Text
-            pointerEvents="none"
+            ref={textRef}
             onTextLayout={(e) => {
               setLines(e.nativeEvent.lines);
             }}
@@ -126,14 +168,15 @@ export function Item(props: IPropsItem) {
               {
                 textAlign: "center",
                 textAlignVertical: "center",
-                fontSize: 32,
-                lineHeight: 34,
                 ...resetStyles.reset,
-                ...StyleSheet.absoluteFillObject,
-                width: "100%",
-                height: "100%",
+                fontFamily:
+                  storiesFontStyle.DancingScriptRegular.style.fontFamily,
+                zIndex: 1000000,
+                opacity: 1,
+                flexWrap: "nowrap",
               },
               animatedTextStyle,
+              animatedTextFontStyle,
             ]}
           >
             {text}

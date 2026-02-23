@@ -18,6 +18,11 @@ export const fonts = {
   RobotoThin: "Roboto-Thin",
   RobotoThinItalic: "Roboto-ThinItalic",
   RubikStormRegular: "RubikStorm-Regular",
+  BetaniaPatmosInRegular: "BetaniaPatmosIn-Regular",
+  BitcountGridDoubleMedium: "BitcountGridDouble-Medium",
+  BungeeRegular: "Bungee-Regular",
+  DancingScriptRegular: "DancingScript-Regular",
+  PacificoRegular: "Pacifico-Regular",
 };
 
 export type TFonts = keyof typeof fonts;

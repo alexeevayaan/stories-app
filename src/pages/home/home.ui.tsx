@@ -1,14 +1,14 @@
 import { fonts } from "@/src/shared/assets/fonts/fonts";
 import { Canvas, Paragraph, Skia, TileMode } from "@shopify/react-native-skia";
-import React, {
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState
-} from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
-import { SkiaBackground } from "../stories/ui";
 
 type TContentSize = { width: number; height: number };
 
@@ -108,13 +108,14 @@ const MagicText = (props: IMagicTextProps) => {
     };
   });
 
+  const { width } = useWindowDimensions();
   return (
     <View>
-      <SkiaBackground
+      {/* <SkiaBackground
         lines={lines}
         textIsEmpty={!text || text?.length === 0}
         backgroundColor={backgroundColor}
-      />
+      /> */}
       <Text
         onTextLayout={(e) => {
           setLines(e.nativeEvent.lines as any);
@@ -155,6 +156,7 @@ const MagicText = (props: IMagicTextProps) => {
             paddingBottom: 0,
             paddingTop: 0,
             color: "rgba(1,1,1,0)",
+            width,
           },
         ]}
       />
