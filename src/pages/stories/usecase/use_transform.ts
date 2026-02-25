@@ -1,5 +1,6 @@
 import { useWindowDimensions } from "react-native";
 import {
+  cancelAnimation,
   clamp,
   SharedValue,
   useAnimatedReaction,
@@ -44,13 +45,17 @@ export const useTransform = (props: IPropsUseTransform) => {
   } = useValues(props);
 
   const onFocus = () => {
-    scale.value = withTimingAnimation(1);
+    cancelAnimation(rotation);
     rotation.value = withTimingAnimation(0);
     isFocused.value = 1;
   };
 
   const onBlur = () => {
     isFocused.value = 0;
+    cancelAnimation(scale);
+    cancelAnimation(rotation);
+    cancelAnimation(offsetX);
+    cancelAnimation(offsetY);
     scale.value = withTimingAnimation(savedScale.value);
     rotation.value = withTimingAnimation(savedRotation.value);
     offsetX.value = withTimingAnimation(savedOffsetX.value);
@@ -75,6 +80,8 @@ export const useTransform = (props: IPropsUseTransform) => {
       const empty =
         height - wrapperLayout.value.height - insets.top - FROM_BOTTOM;
 
+      cancelAnimation(offsetX);
+
       switch (textAlign) {
         case "left":
           offsetX.value = 0;
@@ -91,6 +98,9 @@ export const useTransform = (props: IPropsUseTransform) => {
 
       const center =
         (wrapperLayout.value.height - layout.value.height + FROM_TOP) / 2;
+
+      cancelAnimation(offsetY);
+
       offsetY.value = withTimingAnimation(
         center -
           clamp(
@@ -116,8 +126,9 @@ export const useTransform = (props: IPropsUseTransform) => {
     () => [safeHeight.value, isFocused.value],
     ([newScale, isFocused]) => {
       if (!isFocused) return;
+      cancelAnimation(scale);
 
-      scale.value = newScale;
+      scale.value = withTimingAnimation(newScale);
     },
     [],
   );
@@ -126,6 +137,8 @@ export const useTransform = (props: IPropsUseTransform) => {
     () => [layout.value.width, isFocused.value],
     ([layoutWidth, isFocused], prevValue) => {
       if (!isFocused || !prevValue?.[0]) return;
+
+      cancelAnimation(savedOffsetX);
 
       switch (textAlign) {
         case "center":
@@ -146,6 +159,9 @@ export const useTransform = (props: IPropsUseTransform) => {
     () => [layout.value.height, isFocused.value],
     ([layoutHeight, isFocused], prevValue) => {
       if (!isFocused || !prevValue?.[0]) return;
+
+      cancelAnimation(savedOffsetY);
+
       savedOffsetY.value =
         savedOffsetY.value - (layoutHeight - prevValue[0]) / 2;
     },
@@ -189,6 +205,10 @@ const useValues = (props: IPropsUseTransform) => {
     () => layout.value,
     (_, prevValue) => {
       if (prevValue?.height === 0 && prevValue?.width === 0) {
+        cancelAnimation(offsetX);
+        cancelAnimation(savedOffsetX);
+        cancelAnimation(offsetY);
+        cancelAnimation(savedOffsetY);
         offsetX.value = centerX.value;
         savedOffsetX.value = centerX.value;
         offsetY.value = centerY.value;
