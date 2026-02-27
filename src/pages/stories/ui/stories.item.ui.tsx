@@ -51,7 +51,7 @@ export function Item(props: IPropsItem) {
 
   const composed = useGesture({ transform, inputRef });
 
-  const [text, setText] = useState("hello");
+  const [text, setText] = useState("hellotuf I wilhhh");
   const [lines, setLines] = useState<TextLayoutLine[]>([]);
 
   const colorUI = useSharedValue<string>("#FFFFFF");
@@ -87,6 +87,7 @@ export function Item(props: IPropsItem) {
   const textRef = useRef<Text>(null);
 
   const { width } = useWindowDimensions();
+  const wrapperWidth = width - 48;
 
   const inputStyle = useAnimatedStyle(() => {
     return {
@@ -94,12 +95,12 @@ export function Item(props: IPropsItem) {
         {
           translateX:
             textAlign === "center"
-              ? -(width - 0 - layout.layout.value.width) / 2
+              ? -(wrapperWidth - layout.layout.value.width) / 2
               : 0,
         },
       ],
     };
-  }, [textAlign]);
+  }, [textAlign, wrapperWidth]);
 
   return (
     <GestureDetector gesture={composed}>
@@ -122,7 +123,7 @@ export function Item(props: IPropsItem) {
               justifyContent: "center",
               alignItems: "center",
               flexDirection: "row",
-              maxWidth: width - 0.4,
+              maxWidth: wrapperWidth,
             },
           ]}
         >
@@ -138,6 +139,7 @@ export function Item(props: IPropsItem) {
             }}
           >
             <AnimatedTextInput
+              maxFontSizeMultiplier={1.2}
               cursorColor={"white"}
               selectionColor={"white"}
               autoFocus
@@ -168,8 +170,8 @@ export function Item(props: IPropsItem) {
                   right: 0,
                   bottom: 0,
                   fontFamily:
-                    storiesFontStyle.DancingScriptRegular.style.fontFamily,
-                  width: width - 0.4,
+                    storiesFontStyle.BitcountGridDoubleMedium.style.fontFamily,
+                  width: wrapperWidth,
                 },
                 animatedTextFontStyle,
                 inputStyle,
@@ -183,34 +185,22 @@ export function Item(props: IPropsItem) {
             onTextLayout={(e) => {
               setLines(e.nativeEvent.lines);
             }}
+            adjustsFontSizeToFit
+            maxFontSizeMultiplier={1.2}
+            minimumFontScale={0.8}
             style={[
               {
                 textAlign: textAlign,
                 textAlignVertical: "center",
                 ...resetStyles.reset,
                 fontFamily:
-                  storiesFontStyle.DancingScriptRegular.style.fontFamily,
-                zIndex: 1000000,
-                opacity: 1,
-                flexWrap: "nowrap",
-                flexShrink: 1,
-                flexGrow: 1,
-                maxWidth: width - 0.4,
-                overflow: "visible",
+                  storiesFontStyle.BitcountGridDoubleMedium.style.fontFamily,
               },
               animatedTextStyle,
               animatedTextFontStyle,
             ]}
           >
             {text}
-            <Text
-              style={{
-                width: 0.1,
-                fontSize: 1,
-              }}
-            >
-              {" "}
-            </Text>
           </Animated.Text>
         </Animated.View>
       </Animated.View>

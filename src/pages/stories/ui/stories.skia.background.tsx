@@ -6,27 +6,35 @@ import {
   Paint,
   RoundedRect,
 } from "@shopify/react-native-skia";
-import { StyleSheet, TextLayoutLine } from "react-native";
-import {
-  SharedValue
-} from "react-native-reanimated";
+import { TextLayoutLine } from "react-native";
+import { SharedValue } from "react-native-reanimated";
 import { resetStyles } from "../config";
 
 interface IPropsSkiaBackground {
   lines: TextLayoutLine[];
   textIsEmpty: boolean;
   backgroundColor: SharedValue<string>;
+  padding?: number;
+  r?: number;
+  blur?: number;
 }
 
 export const SkiaBackground = ({
   lines,
   textIsEmpty,
   backgroundColor,
+  padding = 12,
+  r = 10,
+  blur = 4,
 }: IPropsSkiaBackground) => {
   return (
     <Canvas
       style={{
-        ...StyleSheet.absoluteFillObject,
+        position: "absolute",
+        left: -100,
+        right: -100,
+        bottom: -100,
+        top: -100,
         ...resetStyles.reset,
         padding: 40,
       }}
@@ -36,7 +44,7 @@ export const SkiaBackground = ({
         dither={true}
         layer={
           <Paint>
-            <Blur blur={4} />
+            <Blur blur={blur} />
             <ColorMatrix
               matrix={[
                 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 18, -7,
@@ -53,11 +61,11 @@ export const SkiaBackground = ({
             return (
               <RoundedRect
                 key={index}
-                x={line.x}
-                y={line.y}
-                width={line.width}
-                height={line.height}
-                r={1}
+                x={line.x + 100 - padding / 2}
+                y={line.y + 100 - padding / 2}
+                width={line.width + padding}
+                height={line.height + padding}
+                r={r}
               />
             );
           })}
