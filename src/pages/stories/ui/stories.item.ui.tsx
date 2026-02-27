@@ -139,7 +139,7 @@ export function Item(props: IPropsItem) {
             }}
           >
             <AnimatedTextInput
-              maxFontSizeMultiplier={1.2}
+              maxFontSizeMultiplier={1.1}
               cursorColor={"white"}
               selectionColor={"white"}
               autoFocus
@@ -186,8 +186,8 @@ export function Item(props: IPropsItem) {
               setLines(e.nativeEvent.lines);
             }}
             adjustsFontSizeToFit
-            maxFontSizeMultiplier={1.2}
-            minimumFontScale={0.8}
+            maxFontSizeMultiplier={1.1}
+            minimumFontScale={0.9}
             style={[
               {
                 textAlign: textAlign,
