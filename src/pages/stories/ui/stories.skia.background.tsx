@@ -5,6 +5,8 @@ import {
   Group,
   Paint,
   RoundedRect,
+  SweepGradient,
+  vec,
 } from "@shopify/react-native-skia";
 import { TextLayoutLine, useWindowDimensions } from "react-native";
 import { SharedValue } from "react-native-reanimated";
@@ -23,11 +25,11 @@ export const SkiaBackground = ({
   lines,
   textIsEmpty,
   backgroundColor,
-  padding = 12,
-  r = 10,
-  blur = 4,
+  padding = 20,
+  r = 1,
+  blur = 1,
 }: IPropsSkiaBackground) => {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
 
   return (
     <Canvas
@@ -68,7 +70,12 @@ export const SkiaBackground = ({
                 width={Math.min(line.width + padding, width)}
                 height={line.height + padding}
                 r={r}
-              />
+              >
+                <SweepGradient
+                  c={vec(height / 3, height / 2)}
+                  colors={["cyan", "magenta", "yellow", "cyan"]}
+                />
+              </RoundedRect>
             );
           })}
       </Group>

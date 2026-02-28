@@ -16,6 +16,7 @@ import { resetStyles } from "../config";
 import { storiesFontStyle } from "../config/font.style";
 import { withTimingAnimation } from "../lib";
 import { ILayout, useGesture, useLayout, useTransform } from "../usecase";
+import { StoriesItemText } from "./stories.itemtext.ui";
 import { SkiaBackground } from "./stories.skia.background";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
@@ -183,6 +184,7 @@ export function Item(props: IPropsItem) {
                   storiesFontStyle.BitcountGridDoubleMedium.style.fontFamily,
                 width: wrapperWidth,
                 maxWidth: wrapperWidth,
+                opacity: 0,
               },
               animatedTextStyle,
               animatedTextFontStyle,
@@ -190,6 +192,7 @@ export function Item(props: IPropsItem) {
           >
             {text}
           </Animated.Text>
+          <StoriesItemText lines={lines} layout={layout.layout} />
         </Animated.View>
       </Animated.View>
     </GestureDetector>
