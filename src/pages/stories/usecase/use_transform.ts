@@ -16,7 +16,6 @@ import { ILayout, useLayout } from "./use_layout";
 interface IPropsUseTransform {
   layout: ReturnType<typeof useLayout>["layout"];
   wrapperLayout: SharedValue<ILayout>;
-  textAlign: "left" | "right" | "center";
 }
 
 const PADDING = 16;
@@ -25,10 +24,10 @@ const FROM_TOP = 56 + PADDING;
 const SOME_VALUES = FROM_BOTTOM + FROM_TOP;
 
 export const useTransform = (props: IPropsUseTransform) => {
-  const { layout, wrapperLayout, textAlign } = props;
+  const { layout, wrapperLayout } = props;
 
   const keyboardHeight = useKeyboard();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   const {
@@ -47,6 +46,7 @@ export const useTransform = (props: IPropsUseTransform) => {
   const onFocus = () => {
     cancelAnimation(rotation);
     rotation.value = withTimingAnimation(0);
+    offsetX.value = withTimingAnimation(24);
     isFocused.value = 1;
   };
 
@@ -80,22 +80,6 @@ export const useTransform = (props: IPropsUseTransform) => {
       const empty =
         height - wrapperLayout.value.height - insets.top - FROM_BOTTOM;
 
-      cancelAnimation(offsetX);
-
-      switch (textAlign) {
-        case "left":
-          offsetX.value = 0;
-          break;
-        case "right":
-          offsetX.value = width - layout.get().width;
-          break;
-        case "center":
-          offsetX.value = withTimingAnimation(
-            width / 2 - layout.get().width / 2,
-          );
-          break;
-      }
-
       const center =
         (wrapperLayout.value.height - layout.value.height + FROM_TOP) / 2;
 
@@ -111,7 +95,7 @@ export const useTransform = (props: IPropsUseTransform) => {
             2,
       );
     },
-    [textAlign],
+    [],
   );
 
   const safeHeight = useDerivedValue(() => {
@@ -140,19 +124,10 @@ export const useTransform = (props: IPropsUseTransform) => {
 
       cancelAnimation(savedOffsetX);
 
-      switch (textAlign) {
-        case "center":
-          savedOffsetX.value =
-            savedOffsetX.value - (layoutWidth - prevValue[0]) / 2;
-          break;
-        case "right":
-          savedOffsetX.value = width - layoutWidth;
-          break;
-        case "left":
-          savedOffsetX.value = 0;
-      }
+      savedOffsetX.value =
+        savedOffsetX.value - (layoutWidth - prevValue[0]) / 2;
     },
-    [textAlign],
+    [],
   );
 
   useAnimatedReaction(
@@ -189,29 +164,20 @@ const useValues = (props: IPropsUseTransform) => {
 
   const isFocused = useSharedValue(0);
 
-  const centerX = useDerivedValue(
-    () => wrapperLayout.value.width / 2 - layout.value.width / 2,
-  );
   const centerY = useDerivedValue(
     () => wrapperLayout.value.height / 2 - layout.value.height / 2,
   );
 
-  const offsetX = useSharedValue(centerX.value);
-  const offsetY = useSharedValue(centerY.value);
-  const savedOffsetX = useSharedValue(centerX.value);
+  const offsetX = useSharedValue(24);
+  const offsetY = useSharedValue(wrapperLayout.value.height / 3);
+  const savedOffsetX = useSharedValue(24);
   const savedOffsetY = useSharedValue(centerY.value);
 
   useAnimatedReaction(
     () => layout.value,
     (_, prevValue) => {
-      if (prevValue?.height === 0 && prevValue?.width === 0) {
-        cancelAnimation(offsetX);
-        cancelAnimation(savedOffsetX);
-        cancelAnimation(offsetY);
+      if (prevValue?.height === 0) {
         cancelAnimation(savedOffsetY);
-        offsetX.value = centerX.value;
-        savedOffsetX.value = centerX.value;
-        offsetY.value = centerY.value;
         savedOffsetY.value = centerY.value;
       }
     },

@@ -6,7 +6,7 @@ import {
   Paint,
   RoundedRect,
 } from "@shopify/react-native-skia";
-import { TextLayoutLine } from "react-native";
+import { TextLayoutLine, useWindowDimensions } from "react-native";
 import { SharedValue } from "react-native-reanimated";
 import { resetStyles } from "../config";
 
@@ -27,6 +27,8 @@ export const SkiaBackground = ({
   r = 10,
   blur = 4,
 }: IPropsSkiaBackground) => {
+  const { width } = useWindowDimensions();
+
   return (
     <Canvas
       style={{
@@ -63,7 +65,7 @@ export const SkiaBackground = ({
                 key={index}
                 x={line.x + 100 - padding / 2}
                 y={line.y + 100 - padding / 2}
-                width={line.width + padding}
+                width={Math.min(line.width + padding, width)}
                 height={line.height + padding}
                 r={r}
               />

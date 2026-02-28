@@ -34,10 +34,10 @@ interface IPropsItem {
 
 export function Item(props: IPropsItem) {
   const { focusedId, id, ref } = props;
+  const textAlignUI = useSharedValue<"left" | "right" | "center">("center");
 
-  const [textAlign, setTextAlign] = useState<"left" | "right" | "center">(
-    "center",
-  );
+  const [lines, setLines] = useState<TextLayoutLine[]>([]);
+  const linesUi = useSharedValue<TextLayoutLine[]>([]);
 
   const inputRef = useRef<TextInput>(null);
 
@@ -46,13 +46,11 @@ export function Item(props: IPropsItem) {
   const transform = useTransform({
     layout: layout.layout,
     wrapperLayout: props.wrapperLayout,
-    textAlign: textAlign,
   });
 
-  const composed = useGesture({ transform, inputRef });
+  const composed = useGesture({ transform, inputRef, lines: linesUi });
 
-  const [text, setText] = useState("hellotuf I wilhhh");
-  const [lines, setLines] = useState<TextLayoutLine[]>([]);
+  const [text, setText] = useState("");
 
   const colorUI = useSharedValue<string>("#FFFFFF");
   const backgroundColorUI = useSharedValue<string>("rgba(122,42,1,1)");
@@ -81,6 +79,7 @@ export function Item(props: IPropsItem) {
     return {
       fontSize: fontSize.value,
       lineHeight: fontSize.value + 8,
+      textAlign: textAlignUI.value,
     };
   });
 
@@ -88,19 +87,6 @@ export function Item(props: IPropsItem) {
 
   const { width } = useWindowDimensions();
   const wrapperWidth = width - 48;
-
-  const inputStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateX:
-            textAlign === "center"
-              ? -(wrapperWidth - layout.layout.value.width) / 2
-              : 0,
-        },
-      ],
-    };
-  }, [textAlign, wrapperWidth]);
 
   return (
     <GestureDetector gesture={composed}>
@@ -123,7 +109,7 @@ export function Item(props: IPropsItem) {
               justifyContent: "center",
               alignItems: "center",
               flexDirection: "row",
-              maxWidth: wrapperWidth,
+              width: wrapperWidth,
             },
           ]}
         >
@@ -136,10 +122,11 @@ export function Item(props: IPropsItem) {
             style={{
               ...StyleSheet.absoluteFillObject,
               overflow: "hidden",
+              width: wrapperWidth,
             }}
           >
             <AnimatedTextInput
-              maxFontSizeMultiplier={1.1}
+              maxFontSizeMultiplier={1.05}
               cursorColor={"white"}
               selectionColor={"white"}
               autoFocus
@@ -161,7 +148,6 @@ export function Item(props: IPropsItem) {
               }}
               style={[
                 {
-                  textAlign: textAlign,
                   textAlignVertical: "center",
                   color: "rgba(1,1,1,0)",
                   ...resetStyles.reset,
@@ -172,9 +158,9 @@ export function Item(props: IPropsItem) {
                   fontFamily:
                     storiesFontStyle.BitcountGridDoubleMedium.style.fontFamily,
                   width: wrapperWidth,
+                  maxWidth: wrapperWidth,
                 },
                 animatedTextFontStyle,
-                inputStyle,
               ]}
               selectTextOnFocus={false}
             />
@@ -184,17 +170,19 @@ export function Item(props: IPropsItem) {
             ref={textRef}
             onTextLayout={(e) => {
               setLines(e.nativeEvent.lines);
+              linesUi.value = e.nativeEvent.lines;
             }}
             adjustsFontSizeToFit
-            maxFontSizeMultiplier={1.1}
-            minimumFontScale={0.9}
+            maxFontSizeMultiplier={1.05}
+            minimumFontScale={0.95}
             style={[
               {
-                textAlign: textAlign,
                 textAlignVertical: "center",
                 ...resetStyles.reset,
                 fontFamily:
                   storiesFontStyle.BitcountGridDoubleMedium.style.fontFamily,
+                width: wrapperWidth,
+                maxWidth: wrapperWidth,
               },
               animatedTextStyle,
               animatedTextFontStyle,

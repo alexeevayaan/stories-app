@@ -1,4 +1,5 @@
-import { RefObject } from "react";
+import { fonts } from "@/src/shared/assets/fonts/fonts";
+import { FC, RefObject, useState } from "react";
 import {
   Keyboard,
   Pressable,
@@ -8,14 +9,17 @@ import {
 } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import Animated, {
+  Easing,
   interpolate,
   SharedValue,
   useAnimatedStyle,
   useDerivedValue,
-  withTiming
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IImperativeItemHandlers } from "./stories.item.ui";
+
+type TSelectedItem = "font" | "color" | "textAlign";
 
 interface IProps {
   focusedId: SharedValue<string>;
@@ -25,7 +29,11 @@ interface IProps {
 export default function StoriesEdit(props: IProps) {
   const { focusedId, refs } = props;
 
+  const [selected, setSelected] = useState<TSelectedItem>("font");
+
   const { width, height } = useWindowDimensions();
+
+  const wrapperWidth = width - 44;
 
   const insets = useSafeAreaInsets();
 
@@ -62,42 +70,146 @@ export default function StoriesEdit(props: IProps) {
             alignItems: "center",
           },
         ]}
-        onPress={() => {
-          Keyboard.dismiss();
-        }}
+        onPress={() => {}}
       >
         <KeyboardStickyView offset={offset}>
           <Animated.View
             style={{
-              width: width - 44,
+              width: wrapperWidth,
               height: 44,
-              backgroundColor: "orange",
+              backgroundColor: "#313131",
               borderRadius: 12,
+              flexDirection: "row",
+              gap: 8,
+              overflow: "hidden",
             }}
           >
-            <Pressable
-              onPress={() => {
-                "worklet";
-
-                const itemRef = refs.current.get(focusedId.value);
-                itemRef?.setColor("#424242");
-              }}
-            >
-              <Text>red</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                "worklet";
-
-                const itemRef = refs.current.get(focusedId.value);
-                itemRef?.setColor("#848812");
-              }}
-            >
-              <Text>blue</Text>
-            </Pressable>
+            <BackgroundSoup type={selected} width={wrapperWidth / 3} />
+            <Animated.View style={styles.btnWrapper}>
+              <Pressable
+                style={styles.btn}
+                onPress={() => {
+                  setSelected("font");
+                  Keyboard.dismiss();
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 22,
+                    color: "white",
+                    fontFamily: fonts.PacificoRegular,
+                  }}
+                >
+                  Aa
+                </Text>
+              </Pressable>
+            </Animated.View>
+            <Animated.View style={styles.btnWrapper}>
+              <Pressable
+                style={styles.btn}
+                onPress={() => {
+                  setSelected("color");
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 22,
+                    color: "white",
+                    fontFamily: fonts.PacificoRegular,
+                  }}
+                >
+                  Aa
+                </Text>
+              </Pressable>
+            </Animated.View>
+            <Animated.View style={styles.btnWrapper}>
+              <Pressable
+                style={styles.btn}
+                onPress={() => {
+                  setSelected("textAlign");
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 22,
+                    color: "white",
+                    fontFamily: fonts.PacificoRegular,
+                  }}
+                >
+                  Aa
+                </Text>
+              </Pressable>
+            </Animated.View>
           </Animated.View>
         </KeyboardStickyView>
       </Pressable>
     </Animated.View>
   );
 }
+
+interface IBackgroundSoup {
+  width: number;
+  type: TSelectedItem;
+}
+const BackgroundSoup: FC<IBackgroundSoup> = ({ width, type }) => {
+  const translateX = useDerivedValue(() => {
+    switch (type) {
+      case "font":
+        return 0;
+      case "color":
+        return width;
+      default:
+        return width * 2;
+    }
+  }, [type, width]);
+
+  const style = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: withTiming(translateX.value, {
+            duration: 250,
+            easing: Easing.linear,
+          }),
+        },
+      ],
+    };
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          ...backgroundSoupStyles.wrapper,
+          width: width,
+        },
+        style,
+      ]}
+    >
+      <Animated.View style={backgroundSoupStyles.item} />
+    </Animated.View>
+  );
+};
+
+const styles = StyleSheet.create({
+  btnWrapper: {
+    flex: 1,
+  },
+  btn: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
+
+const backgroundSoupStyles = StyleSheet.create({
+  wrapper: {
+    ...StyleSheet.absoluteFillObject,
+    padding: 4,
+  },
+  item: {
+    flex: 1,
+    backgroundColor: "#414141",
+    borderRadius: 8,
+  },
+});
