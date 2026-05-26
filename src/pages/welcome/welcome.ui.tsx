@@ -2,18 +2,18 @@ import { Dimensions, Pressable, StyleSheet, View } from "react-native";
 import { WelcomeBackground } from "./welcome.background.ui";
 
 import {
-  BackdropBlur,
-  Canvas,
-  Image,
-  useImage,
+    BackdropBlur,
+    Canvas,
+    Image,
+    useImage,
 } from "@shopify/react-native-skia";
 import { router } from "expo-router";
 import { useEffect } from "react";
 import Animated, {
-  FadeIn,
-  useSharedValue,
-  withDelay,
-  withTiming,
+    FadeIn,
+    useSharedValue,
+    withDelay,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -38,7 +38,7 @@ const Images = () => {
       entering={FadeIn.duration(FADE_IN_DURATION)}
       className="flex-1 items-center justify-center "
       style={{
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
 
         animationFillMode: "both",
         animationTimingFunction: "linear",

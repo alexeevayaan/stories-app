@@ -81,14 +81,13 @@ export default function OnboardingItem(props: IOnboardingItem) {
           ]}
         >
           <Animated.Image
-            style={[StyleSheet.absoluteFillObject, scaleImageStyle]}
+            style={[StyleSheet.absoluteFill, scaleImageStyle]}
             source={{
               uri: item.image_url,
             }}
           />
 
           <BlurView
-            experimentalBlurMethod="dimezisBlurView"
             intensity={40}
             style={{
               padding: 24,

@@ -318,7 +318,7 @@ export function StoriesScreen() {
                 textAlignVertical: "center",
                 fontSize: 24,
                 color: "#000000",
-                ...StyleSheet.absoluteFillObject,
+                ...StyleSheet.absoluteFill,
                 ...resetStyles.reset,
               }}
             >
@@ -375,7 +375,7 @@ const SkiaBackground = ({ lines, textIsEmpty }: IPropsSkiaBackground) => {
   return (
     <Canvas
       style={{
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         ...resetStyles.reset,
         padding: 40,
       }}
@@ -638,7 +638,7 @@ const Lines = ({ translationX, translationY, limitLines }: IPropsLines) => {
     <View
       pointerEvents="none"
       style={{
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
       }}
     >
       {lines.map((item, index) => {

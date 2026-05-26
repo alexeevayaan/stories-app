@@ -1,16 +1,16 @@
 import { RefObject, useImperativeHandle, useRef, useState } from "react";
 import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TextLayoutLine,
-  useWindowDimensions,
+    StyleSheet,
+    Text,
+    TextInput,
+    TextLayoutLine,
+    useWindowDimensions,
 } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
+    SharedValue,
+    useAnimatedStyle,
+    useSharedValue,
 } from "react-native-reanimated";
 import { resetStyles } from "../config";
 import { storiesFontStyle } from "../config/font.style";
@@ -121,7 +121,7 @@ export function Item(props: IPropsItem) {
           />
           <Animated.View
             style={{
-              ...StyleSheet.absoluteFillObject,
+              ...StyleSheet.absoluteFill,
               overflow: "hidden",
               width: wrapperWidth,
             }}

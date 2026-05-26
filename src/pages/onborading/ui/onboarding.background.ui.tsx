@@ -1,10 +1,10 @@
 import { StyleSheet } from "react-native";
 import Animated, {
-    Easing,
-    interpolateColor,
-    SharedValue,
-    useAnimatedStyle,
-    withTiming,
+  Easing,
+  interpolateColor,
+  SharedValue,
+  useAnimatedStyle,
+  withTiming,
 } from "react-native-reanimated";
 
 const colors = [
@@ -30,5 +30,5 @@ export default function OnboardingBackground(props: IAnimatedBackgroundProps) {
     };
   });
 
-  return <Animated.View style={[StyleSheet.absoluteFillObject, style]} />;
+  return <Animated.View style={[StyleSheet.absoluteFill, style]} />;
 }

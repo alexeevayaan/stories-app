@@ -1,20 +1,20 @@
 import { fonts } from "@/src/shared/assets/fonts/fonts";
 import { FC, RefObject, useState } from "react";
 import {
-  Keyboard,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
+    Keyboard,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
 } from "react-native";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import Animated, {
-  Easing,
-  interpolate,
-  SharedValue,
-  useAnimatedStyle,
-  useDerivedValue,
-  withTiming,
+    Easing,
+    interpolate,
+    SharedValue,
+    useAnimatedStyle,
+    useDerivedValue,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IImperativeItemHandlers } from "./stories.item.ui";
@@ -56,7 +56,7 @@ export default function StoriesEdit(props: IProps) {
     <Animated.View
       style={[
         {
-          ...StyleSheet.absoluteFillObject,
+          ...StyleSheet.absoluteFill,
           backgroundColor: "rgba(0, 0, 0, 0.40)",
         },
         style,
@@ -64,7 +64,7 @@ export default function StoriesEdit(props: IProps) {
     >
       <Pressable
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           {
             justifyContent: "flex-end",
             alignItems: "center",
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
 
 const backgroundSoupStyles = StyleSheet.create({
   wrapper: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     padding: 4,
   },
   item: {

@@ -53,7 +53,7 @@ export const WelcomeBackground = () => {
 
   return (
     <Animated.View
-      style={[StyleSheet.absoluteFillObject]}
+      style={[StyleSheet.absoluteFill]}
       entering={FadeIn.duration(1250)}
     >
       <Canvas style={{ flex: 1 }}>
